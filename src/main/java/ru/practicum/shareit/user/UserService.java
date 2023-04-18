@@ -30,6 +30,7 @@ public class UserService {
     }
 
     public void delete(Long userId) {
+        //UB - if delete user and left items - needed to be solved in future
         userRepository.delete(userId);
     }
 

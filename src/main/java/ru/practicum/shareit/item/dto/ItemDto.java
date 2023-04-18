@@ -3,13 +3,8 @@ package ru.practicum.shareit.item.dto;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-/**
- * TODO Sprint add-controllers.
- */
-@Getter
-@ToString
-@AllArgsConstructor
-@Builder
+@Data
+@Builder(toBuilder = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ItemDto {
     Long id;

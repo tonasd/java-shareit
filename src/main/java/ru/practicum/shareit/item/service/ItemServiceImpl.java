@@ -1,9 +1,10 @@
-package ru.practicum.shareit.item;
+package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import ru.practicum.shareit.item.ItemMapper;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
@@ -15,36 +16,36 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class ItemService {
+public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
 
-    public ItemDto create(Long userId, ItemDto itemDto) {
+    @Override public ItemDto create(Long userId, ItemDto itemDto) {
         Item item = getItemFromDto(userId,itemDto);
         item = itemRepository.add(item);
         return ItemMapper.mapToItemDto(item);
     }
 
 
-    public ItemDto update(Long userId, ItemDto itemDto) {
+    @Override public ItemDto update(Long userId, ItemDto itemDto) {
         Item item = getItemFromDto(userId, itemDto);
         validateOwner(item);
         item = itemRepository.update(item);
         return ItemMapper.mapToItemDto(item);
     }
 
-    public ItemDto getByItemId(Long itemId) {
+    @Override public ItemDto getByItemId(Long itemId) {
         Item item = itemRepository.getByItemId(itemId);
         return ItemMapper.mapToItemDto(item);
     }
 
-    public Collection<ItemDto> getByUserId(Long userId) {
+    @Override public Collection<ItemDto> getByUserId(Long userId) {
         userRepository.get(userId); // check if user exists
         Collection<Item> userItems = itemRepository.getByUserId(userId);
         return userItems.stream().map(ItemMapper::mapToItemDto).collect(Collectors.toUnmodifiableList());
     }
 
-    public Collection<ItemDto> findByText(String text) {
+    @Override public Collection<ItemDto> findByText(String text) {
         if (text.isBlank()) {
             return List.of();
         }
@@ -64,7 +65,5 @@ public class ItemService {
         item.setOwner(userRepository.get(userId));
         return item;
     }
-
-
 
 }

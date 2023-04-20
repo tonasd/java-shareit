@@ -1,6 +1,7 @@
 package ru.practicum.shareit.item;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.ItemDto;
@@ -8,6 +9,7 @@ import ru.practicum.shareit.item.service.ItemService;
 
 import java.util.Collection;
 
+@Slf4j
 @RestController
 @RequestMapping("/items")
 @RequiredArgsConstructor
@@ -17,7 +19,9 @@ public class ItemController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ItemDto createNewItem(@RequestBody ItemDto itemDto, @RequestHeader("X-Sharer-User-Id") Long userId) {
-        return itemService.create(userId, itemDto);
+        itemDto = itemService.create(userId, itemDto);
+        log.info("User {} created item {}", userId, itemDto);
+        return itemDto;
     }
 
     @PatchMapping("/{itemId}")
@@ -25,22 +29,30 @@ public class ItemController {
                                     @PathVariable Long itemId,
                                     @RequestHeader("X-Sharer-User-Id") Long userId) {
         itemDto.setId(itemId);
-        return itemService.update(userId, itemDto);
+        itemDto = itemService.update(userId, itemDto);
+        log.info("User {} updated item {}", userId, itemDto);
+        return itemDto;
     }
 
     @GetMapping("/{itemId}")
-    public ItemDto getByItemId(@PathVariable Long itemId) {
-        return itemService.getByItemId(itemId);
+    public ItemDto getByItemId(@PathVariable Long itemId, @RequestHeader("X-Sharer-User-Id") Long userId) {
+        ItemDto itemDto = itemService.getByItemId(itemId);
+        log.info("User {} got item {}", userId, itemDto);
+        return itemDto;
     }
 
     @GetMapping
     public Collection<ItemDto> getAllUsersItems(@RequestHeader("X-Sharer-User-Id") Long userId) {
-        return itemService.getByUserId(userId);
+        Collection<ItemDto> collection = itemService.getByUserId(userId);
+        log.info("Given {} items belong to user {}", collection.size(), userId);
+        return collection;
     }
 
     @GetMapping("/search")
     public Collection<ItemDto> findByText(@RequestParam() String text) {
-        return itemService.findByText(text);
+        Collection<ItemDto> collection = itemService.findByText(text);
+        log.info("It has been found {} items with text \"{}\"", collection.size(), text);
+        return collection;
     }
 
 }

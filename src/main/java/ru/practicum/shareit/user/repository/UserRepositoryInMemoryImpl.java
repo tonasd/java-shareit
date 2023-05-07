@@ -1,3 +1,4 @@
+/*
 package ru.practicum.shareit.user.repository;
 
 import org.springframework.stereotype.Repository;
@@ -42,3 +43,4 @@ public class UserRepositoryInMemoryImpl implements UserRepository {
         users.remove(id);
     }
 }
+*/

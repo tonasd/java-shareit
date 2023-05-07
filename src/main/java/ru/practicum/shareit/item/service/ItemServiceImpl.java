@@ -3,6 +3,8 @@ package ru.practicum.shareit.item.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import ru.practicum.shareit.exception.ItemNotFoundException;
 import ru.practicum.shareit.exception.UserNotFoundException;
@@ -17,7 +19,9 @@ import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.validation.Validator;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,19 +31,20 @@ public class ItemServiceImpl implements ItemService {
     private final UserRepository userRepository;
     private final Validator validator;
 
-    @Override public ItemDto create(Long userId, ItemDto itemDto) {
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    @Override
+    public ItemDto create(Long userId, ItemDto itemDto) {
         validate(itemDto);
-        User owner = Optional.ofNullable(userRepository.get(userId)).orElseThrow(() -> new UserNotFoundException(userId));
+        User owner = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
         Item item = ItemMapper.mapToItem(itemDto, owner);
-        itemDto.setId(itemRepository.add(item));
-        return itemDto;
+        item = itemRepository.save(item);
+        return ItemMapper.mapToItemDto(item);
     }
 
-    @Override public ItemDto update(Long userId, ItemDto itemDto) {
-        Item item = itemRepository.getByItemId(itemDto.getId());
-        if (item == null) {
-            throw new ItemNotFoundException(itemDto.getId());
-        }
+    @Transactional
+    @Override
+    public ItemDto update(Long userId, ItemDto itemDto) {
+        Item item = getItemById(itemDto.getId());
 
         if (userId != item.getOwner().getId()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only owner allowed operation");
@@ -53,34 +58,37 @@ public class ItemServiceImpl implements ItemService {
         if (itemDto.getDescription() != null) {
             item.setDescription(itemDto.getDescription());
         }
+
         validate(ItemMapper.mapToItemDto(item));
-        itemRepository.update(item);
+        item = itemRepository.save(item);
         return ItemMapper.mapToItemDto(item);
     }
 
-    @Override public ItemDto getByItemId(Long itemId) {
-        Item item = itemRepository.getByItemId(itemId);
-        if (item == null) {
-            throw new ItemNotFoundException(itemId);
-        }
-        return ItemMapper.mapToItemDto(item);
+    @Override
+    public ItemDto getByItemId(Long itemId) {
+        return ItemMapper.mapToItemDto(getItemById(itemId));
     }
 
-    @Override public Collection<ItemDto> getByUserId(Long userId) {
+    @Transactional(readOnly = true)
+    @Override
+    public Collection<ItemDto> getByUserId(Long userId) {
         // check if user exists
-        Optional.ofNullable(userRepository.get(userId)).orElseThrow(() -> new UserNotFoundException(userId));
+        if (!userRepository.existsById(userId)) {
+            throw new UserNotFoundException(userId);
+        }
 
-        return itemRepository.getAll().stream()
-                .filter(item -> Objects.equals(item.getOwner().getId(), userId))
+        return itemRepository.findAllByOwnerId(userId)
                 .map(ItemMapper::mapToItemDto)
                 .collect(Collectors.toUnmodifiableList());
     }
 
-    @Override public Collection<ItemDto> findByText(String text) {
+    @Transactional(readOnly = true)
+    @Override
+    public Collection<ItemDto> findByText(String text) {
         if (text.isBlank()) {
             return List.of();
         }
-        return itemRepository.findByText(text).stream()
+        return itemRepository.findAllByAvailableTrueAndNameContainsOrDescriptionContainsAllIgnoreCase(text)
                 .map(ItemMapper::mapToItemDto)
                 .collect(Collectors.toUnmodifiableList());
     }
@@ -90,5 +98,9 @@ public class ItemServiceImpl implements ItemService {
         if (!violations.isEmpty()) {
             throw new ConstraintViolationException(violations);
         }
+    }
+
+    private Item getItemById(long itemId) {
+        return itemRepository.findById(itemId).orElseThrow(() -> new ItemNotFoundException(itemId));
     }
 }

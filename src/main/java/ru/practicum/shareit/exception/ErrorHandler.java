@@ -2,6 +2,7 @@
 package ru.practicum.shareit.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -30,9 +31,16 @@ public class ErrorHandler {
 
     @ExceptionHandler
     @ResponseStatus(value = HttpStatus.CONFLICT)
-    protected String handleUserEmailDuplicateException(final UserEmailDuplicateException e) {
-        log.warn(e.toString());
-        return e.getMessage();
+    protected String handleDataIntegrityViolation(final DataIntegrityViolationException e) {
+        String message = e.getMostSpecificCause().getMessage();
+        if (message.contains("EMAIL_UNIQUE")) {
+            message = "Email is already registered for another user";
+        } else {
+            message = "Conflict with server rules";
+        }
+        log.warn(message);
+
+        return message;
     }
 
     @ExceptionHandler

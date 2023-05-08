@@ -50,6 +50,10 @@ public class BookingServiceImpl implements BookingService {
         if (!item.isAvailable()) {
             throw new ItemNotAvailableException(bookingCreationDto.getItemId());
         }
+        //TODO not logged
+        if (item.getOwner().getId() == bookingCreationDto.getBookerId()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner cannot book own item");
+        }
         User booker = userRepository.findById(bookingCreationDto.getBookerId())
                 .orElseThrow(() -> new UserNotFoundException(bookingCreationDto.getBookerId()));
         Booking booking = bookingRepository.save(BookingMapper.mapCreationDtoToBooking(bookingCreationDto, item, booker));

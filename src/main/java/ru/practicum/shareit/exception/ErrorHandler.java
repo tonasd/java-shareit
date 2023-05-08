@@ -53,7 +53,7 @@ public class ErrorHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    protected Map<String, String> handleConstraintViolationException(final UnknownStateException e) {
+    protected Map<String, String> handleUnknownStateException(final UnknownStateException e) {
         log.warn(e.toString());
         return Map.of("error", "Unknown state: " + e.getMessage());
     }

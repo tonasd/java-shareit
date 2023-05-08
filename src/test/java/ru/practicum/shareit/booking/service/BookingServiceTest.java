@@ -112,7 +112,6 @@ class BookingServiceTest {
         BookingDto actual = bookingService.create(creationDto1);
         long bookingId = actual.getId();
         long ownerId = 1;
-        long bookerId = actual.getBooker().getId();
 
         //booking not exists
         assertThrows(BookingNotFoundException.class,
@@ -145,7 +144,6 @@ class BookingServiceTest {
         assertEquals(actual, byBooker);
 
         //booking not exists
-        ;
         assertThrows(BookingNotFoundException.class,
                 () -> bookingService.findBookingByOwnerOrBooker(bookingId + 10, ownerId));
 

@@ -48,23 +48,24 @@ public class BookingController {
     @GetMapping
     public List<BookingDto> findBookingsOfBooker(@RequestHeader("X-Sharer-User-Id") long bookerId,
                                                  @RequestParam(defaultValue = "ALL") String state) {
-        BookingSearchState stateEnum;
-        try {
-            stateEnum = BookingSearchState.valueOf(state);
-        } catch (IllegalArgumentException e) {
-            throw new UnknownStateException(state);
-        }
-        List<BookingDto> bookings = bookingService.findAllBookingsOfBooker(bookerId, stateEnum);
+        List<BookingDto> bookings = bookingService.findAllBookingsOfBooker(bookerId, getBookingSearchState(state));
         log.info("For booker {} was found {} bookings with state {}", bookerId, bookings.size(), state);
         return bookings;
     }
 
     @GetMapping("/owner")
     public List<BookingDto> findBookingsOfOwner(@RequestHeader("X-Sharer-User-Id") long ownerId,
-                                                @RequestParam(defaultValue = "ALL") BookingSearchState state) {
-        List<BookingDto> bookings = bookingService.findAllBookingsOfOwner(ownerId, state);
+                                                @RequestParam(defaultValue = "ALL") String state) {
+        List<BookingDto> bookings = bookingService.findAllBookingsOfOwner(ownerId, getBookingSearchState(state));
         log.info("For owner {} was found {} bookings with state {}", ownerId, bookings.size(), state);
-
         return bookings;
+    }
+
+    private BookingSearchState getBookingSearchState(String state) {
+        try {
+            return BookingSearchState.valueOf(state);
+        } catch (IllegalArgumentException e) {
+            throw new UnknownStateException(state);
+        }
     }
 }

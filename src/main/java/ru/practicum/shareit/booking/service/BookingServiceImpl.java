@@ -86,7 +86,7 @@ public class BookingServiceImpl implements BookingService {
     @Transactional(readOnly = true)
     @Override
     public List<BookingDto> findAllBookingsOfBooker(long bookerId, BookingSearchState state) {
-        if (userRepository.existsById(bookerId)) {
+        if (!userRepository.existsById(bookerId)) {
             throw new UserNotFoundException(bookerId);
         }
         Stream<Booking> bookingStream;
@@ -123,7 +123,7 @@ public class BookingServiceImpl implements BookingService {
     @Transactional(readOnly = true)
     @Override
     public List<BookingDto> findAllBookingsOfOwner(long ownerId, BookingSearchState state) {
-        if (userRepository.existsById(ownerId)) {
+        if (!userRepository.existsById(ownerId)) {
             throw new UserNotFoundException(ownerId);
         }
         Stream<Booking> bookingStream;

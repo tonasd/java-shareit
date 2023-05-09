@@ -7,6 +7,7 @@ import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.BookingStatus;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -50,9 +51,14 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     Stream<Booking> findAllCurrentOwnerBookings(long ownerId, LocalDateTime now, Sort sort);
 
     // find next booking
-    BookingIdAndBookerIdOnly findFirstByItemIdAndStartAfterOrderByStartAsc(Long itemId, LocalDateTime now);
+    BookingIdAndBookerIdOnly findFirstByItemIdAndStartAfterAndStatusNotOrderByStartAsc(long itemId,
+                                                                                       LocalDateTime now,
+                                                                                       BookingStatus status);
 
     // find last booking
-    BookingIdAndBookerIdOnly findFirstByItemIdAndStartBeforeOrderByEndAsc(Long itemId, LocalDateTime now);
+    BookingIdAndBookerIdOnly findFirstByItemIdAndStartBeforeOrderByEndAsc(long itemId, LocalDateTime now);
+
+    List<Booking> findAllByItemIdAndBookerIdAndStatusIsAndEndBefore(long itemId, long bookerId,
+                                                                    BookingStatus bookingStatus, LocalDateTime now);
 
 }

@@ -4,11 +4,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemWithBookingsAndCommentsDto;
 import ru.practicum.shareit.item.dto.ItemWithBookingsDto;
 import ru.practicum.shareit.item.service.ItemService;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import java.util.Collection;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -36,8 +42,8 @@ public class ItemController {
     }
 
     @GetMapping("/{itemId}")
-    public ItemWithBookingsDto getByItemId(@PathVariable Long itemId, @RequestHeader("X-Sharer-User-Id") Long userId) {
-        ItemWithBookingsDto itemDto = itemService.getByItemId(itemId, userId);
+    public ItemWithBookingsAndCommentsDto getByItemId(@PathVariable Long itemId, @RequestHeader("X-Sharer-User-Id") Long userId) {
+        ItemWithBookingsAndCommentsDto itemDto = itemService.getByItemId(itemId, userId);
         log.info("User {} got item {}", userId, itemDto);
         return itemDto;
     }
@@ -54,6 +60,22 @@ public class ItemController {
         Collection<ItemDto> collection = itemService.findByText(text);
         log.info("It has been found {} items with text \"{}\"", collection.size(), text);
         return collection;
+    }
+
+    @PostMapping("/{itemId}/comment")
+    public CommentDto postCommentForItem(@RequestHeader("X-Sharer-User-id") Long authorId,
+                                         @PathVariable Long itemId,
+                                         @RequestBody @Valid @NotBlank Map<String, String> requestBody) {
+        if (!requestBody.containsKey("text") || requestBody.get("text").isBlank()) {
+            RuntimeException e = new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Body must have not be empty text property");
+            log.warn(e.getMessage());
+            throw e;
+        }
+        CommentDto commentDto = itemService.postCommentForItemFromAuthor(requestBody.get("text"), itemId, authorId);
+        log.info("Author {} added comment for item {}", authorId, itemId);
+        return commentDto;
+
     }
 
 }

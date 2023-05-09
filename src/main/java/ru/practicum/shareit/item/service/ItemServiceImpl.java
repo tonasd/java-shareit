@@ -6,14 +6,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import ru.practicum.shareit.booking.Booking;
+import ru.practicum.shareit.booking.BookingStatus;
 import ru.practicum.shareit.booking.repository.BookingIdAndBookerIdOnly;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exception.ItemNotFoundException;
 import ru.practicum.shareit.exception.UserNotFoundException;
+import ru.practicum.shareit.item.CommentMapper;
 import ru.practicum.shareit.item.ItemMapper;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemWithBookingsAndCommentsDto;
 import ru.practicum.shareit.item.dto.ItemWithBookingsDto;
+import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.item.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.repository.UserRepository;
@@ -35,6 +42,7 @@ public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
+    private final CommentRepository commentRepository;
     private final Validator validator;
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
@@ -75,17 +83,19 @@ public class ItemServiceImpl implements ItemService {
         return ItemMapper.mapToItemDto(getItemById(itemId));
     }
 
-    public ItemWithBookingsDto getByItemId(Long itemId, Long requestFromUserId) {
+    public ItemWithBookingsAndCommentsDto getByItemId(Long itemId, Long requestFromUserId) {
         Item item = getItemById(itemId);
         BookingIdAndBookerIdOnly lastBooking = null;
         BookingIdAndBookerIdOnly nextBooking = null;
         if (item.getOwner().getId() == requestFromUserId) {
             LocalDateTime now = LocalDateTime.now();
             lastBooking = bookingRepository.findFirstByItemIdAndStartBeforeOrderByEndAsc(itemId, now);
-            nextBooking = bookingRepository.findFirstByItemIdAndStartAfterOrderByStartAsc(itemId, now);
+            nextBooking = bookingRepository.findFirstByItemIdAndStartAfterAndStatusNotOrderByStartAsc(itemId, now, BookingStatus.REJECTED);
         }
 
-        return ItemMapper.mapToItemWithBookingsDto(item, lastBooking, nextBooking);
+        List<CommentDto> comments = commentRepository.findAllByItemId(itemId);
+
+        return ItemMapper.mapToItemWithBookingsAndCommentsDto(item, lastBooking, nextBooking, comments);
     }
 
     @Transactional(readOnly = true)
@@ -104,7 +114,7 @@ public class ItemServiceImpl implements ItemService {
             BookingIdAndBookerIdOnly lastBooking = bookingRepository
                     .findFirstByItemIdAndStartBeforeOrderByEndAsc(itemId, now);
             BookingIdAndBookerIdOnly nextBooking = bookingRepository
-                    .findFirstByItemIdAndStartAfterOrderByStartAsc(itemId, now);
+                    .findFirstByItemIdAndStartAfterAndStatusNotOrderByStartAsc(itemId, now, BookingStatus.REJECTED);
             itemWithBookingsDtos.add(ItemMapper.mapToItemWithBookingsDto(item, lastBooking, nextBooking));
         }
 
@@ -120,6 +130,27 @@ public class ItemServiceImpl implements ItemService {
         return itemRepository.findAllByAvailableTrueAndNameContainsOrDescriptionContainsAllIgnoreCase(text)
                 .map(ItemMapper::mapToItemDto)
                 .collect(Collectors.toUnmodifiableList());
+    }
+
+    @Override
+    public CommentDto postCommentForItemFromAuthor(String text, Long itemId, Long authorId) {
+        LocalDateTime now = LocalDateTime.now();
+        List<Booking> items = bookingRepository
+                .findAllByItemIdAndBookerIdAndStatusIsAndEndBefore(itemId, authorId, BookingStatus.APPROVED, now);
+        if (items.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+        Booking booking = items.get(0);
+        Item item = booking.getItem();
+        User author = booking.getBooker();
+        Comment comment = new Comment();
+        comment.setText(text);
+        comment.setAuthor(author);
+        comment.setItem(item);
+        comment.setCreated(now);
+
+        comment = commentRepository.save(comment);
+        return CommentMapper.mapToDto(comment);
     }
 
     private void validate(@Valid ItemDto itemDto) {

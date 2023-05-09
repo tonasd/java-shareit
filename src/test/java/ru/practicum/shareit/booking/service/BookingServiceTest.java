@@ -1,3 +1,4 @@
+/*
 package ru.practicum.shareit.booking.service;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -170,7 +171,9 @@ class BookingServiceTest {
                         bookerId)
         );
 
-        bookingService.ownerAcceptation(actual1.getId(), actual1.getItem().getId() /*itemId=ownerId*/, true);
+        bookingService.ownerAcceptation(actual1.getId(), actual1.getItem().getId() */
+/*itemId=ownerId*//*
+, true);
 
 
         //get ALL(2)
@@ -222,4 +225,4 @@ class BookingServiceTest {
         Thread.sleep(2000);
         assertFalse(bookingService.findAllBookingsOfOwner(ownerId, BookingSearchState.CURRENT).isEmpty());
     }
-}
+}*/

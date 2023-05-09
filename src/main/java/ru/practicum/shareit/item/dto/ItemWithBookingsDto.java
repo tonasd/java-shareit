@@ -13,4 +13,11 @@ import ru.practicum.shareit.booking.repository.BookingIdAndBookerIdOnly;
 public class ItemWithBookingsDto extends ItemDto {
     BookingIdAndBookerIdOnly lastBooking;
     BookingIdAndBookerIdOnly nextBooking;
+
+
+    public ItemWithBookingsDto(ItemDto itemDto, BookingIdAndBookerIdOnly lastBooking, BookingIdAndBookerIdOnly nextBooking) {
+        super(itemDto.getId(), itemDto.getAvailable(), itemDto.getName(), itemDto.getDescription());
+        this.lastBooking = lastBooking;
+        this.nextBooking = nextBooking;
+    }
 }

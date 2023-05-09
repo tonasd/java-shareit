@@ -1,7 +1,9 @@
 package ru.practicum.shareit.item;
 
 import ru.practicum.shareit.booking.repository.BookingIdAndBookerIdOnly;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemWithBookingsAndCommentsDto;
 import ru.practicum.shareit.item.dto.ItemWithBookingsDto;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.User;
@@ -31,18 +33,17 @@ public class ItemMapper {
     public static ItemWithBookingsDto mapToItemWithBookingsDto(Item item,
                                                                BookingIdAndBookerIdOnly lastBooking,
                                                                BookingIdAndBookerIdOnly nextBooking) {
-        ItemWithBookingsDto itemWithBookingsDto = new ItemWithBookingsDto();
-        itemWithBookingsDto.setId(item.getId());
-        itemWithBookingsDto.setName(item.getName());
-        itemWithBookingsDto.setDescription(item.getDescription());
-        itemWithBookingsDto.setAvailable(item.isAvailable());
-        itemWithBookingsDto.setLastBooking(lastBooking);
-        itemWithBookingsDto.setNextBooking(nextBooking);
-
-        return itemWithBookingsDto;
+        return new ItemWithBookingsDto(mapToItemDto(item),lastBooking,nextBooking);
     }
 
-    public static Collection<ItemWithBookingsDto> mapToItemWithBookingsDto(Collection<Item> items,
+    public static ItemWithBookingsAndCommentsDto mapToItemWithBookingsAndCommentsDto(Item item,
+                                                                                     BookingIdAndBookerIdOnly lastBooking,
+                                                                                     BookingIdAndBookerIdOnly nextBooking,
+                                                                                     List<CommentDto> comments) {
+        return new ItemWithBookingsAndCommentsDto(mapToItemWithBookingsDto(item, lastBooking, nextBooking), comments);
+    }
+
+    /*public static Collection<ItemWithBookingsDto> mapToItemWithBookingsDto(Collection<Item> items,
                                                                            Collection<BookingIdAndBookerIdOnly> lastBookings,
                                                                            Collection<BookingIdAndBookerIdOnly> nextBookings) {
         if (items.size() != lastBookings.size() || items.size() != nextBookings.size()) {
@@ -59,7 +60,6 @@ public class ItemMapper {
         }
 
         return resultList;
-    }
-
+    }*/
 }
 

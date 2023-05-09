@@ -48,4 +48,11 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             "WHERE b.item.owner.id = :ownerId " +
             "AND :now BETWEEN b.start AND b.end")
     Stream<Booking> findAllCurrentOwnerBookings(long ownerId, LocalDateTime now, Sort sort);
+
+    // find next booking
+    BookingIdAndBookerIdOnly findFirstByItemIdAndStartAfterOrderByStartAsc(Long itemId, LocalDateTime now);
+
+    // find last booking
+    BookingIdAndBookerIdOnly findFirstByItemIdAndStartBeforeOrderByEndAsc(Long itemId, LocalDateTime now);
+
 }

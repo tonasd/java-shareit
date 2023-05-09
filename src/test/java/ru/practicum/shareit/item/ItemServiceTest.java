@@ -4,15 +4,24 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
+import ru.practicum.shareit.booking.dto.BookingCreationDto;
+import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.exception.UserNotFoundException;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemWithBookingsDto;
+import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.service.ItemService;
+import ru.practicum.shareit.user.UserMapper;
 import ru.practicum.shareit.user.UserService;
 import ru.practicum.shareit.user.dto.UserDto;
 
 import javax.validation.ConstraintViolationException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
@@ -26,6 +35,8 @@ class ItemServiceTest {
     private ItemService itemService;
     @Autowired
     private UserService userService;
+    @Autowired
+    private BookingService bookingService;
     private static List<ItemDto> itemDtoList;
 
     @BeforeAll
@@ -88,16 +99,54 @@ class ItemServiceTest {
     }
 
     @Test
+    void getByItemIdWithBookings() throws InterruptedException {
+        ItemDto itemDto = itemService.create(1L, itemDtoList.get(1));
+        long itemId = itemDto.getId();
+        long ownerId = 1L;
+        assertEquals(itemId, itemService.getByItemId(itemDto.getId(), ownerId).getId());
+        assertNull(itemService.getByItemId(itemDto.getId(), ownerId).getLastBooking());
+        assertNull(itemService.getByItemId(itemDto.getId(), ownerId).getNextBooking());
+
+        long bookerId = 3L;
+        long nextBookingId = bookingService.create(
+                new BookingCreationDto(itemDto.getId(),
+                        LocalDateTime.now().plusSeconds(2),
+                        LocalDateTime.now().plusSeconds(3),
+                        bookerId)
+        ).getId();
+        long lastBookingId = bookingService.create(
+                new BookingCreationDto(itemDto.getId(),
+                        LocalDateTime.now().plusNanos(100000000),
+                        LocalDateTime.now().plusSeconds(1).plusNanos(500000000),
+                        bookerId)
+        ).getId();
+        Thread.sleep(1000);
+        assertEquals(nextBookingId, itemService.getByItemId(itemDto.getId(), ownerId).getNextBooking().getId());
+        assertEquals(lastBookingId, itemService.getByItemId(itemDto.getId(), ownerId).getLastBooking().getId());
+
+        //by not owner
+        assertNull(itemService.getByItemId(itemDto.getId(), ownerId + 1).getLastBooking());
+        assertNull(itemService.getByItemId(itemDto.getId(), ownerId + 1).getNextBooking());
+        System.out.println(itemService.getByItemId(itemDto.getId(), ownerId));
+
+    }
+
+    @Test
     void getByUserId() {
         //no items
         assertIterableEquals(List.of(), itemService.getByUserId(4L));
 
         //one item
-        List<ItemDto> expected = new ArrayList<>(List.of(itemService.create(4L, itemDtoList.get(4))));
-        assertIterableEquals(expected, itemService.getByUserId(4L));
+        Item item = ItemMapper.mapToItem(itemService.create(4L, itemDtoList.get(4)),
+                UserMapper.mapToUser(userService.get(4L)));
+        List<ItemWithBookingsDto> expected = new ArrayList<>(List.of(ItemMapper.mapToItemWithBookingsDto(item, null, null)));
+        Collection<ItemWithBookingsDto> byUserId = itemService.getByUserId(4L);
+        assertIterableEquals(expected, byUserId);
 
         //two items
-        expected.add(itemService.create(4L, itemDtoList.get(5)));
+        Item item2 = ItemMapper.mapToItem(itemService.create(4L, itemDtoList.get(5)),
+                UserMapper.mapToUser(userService.get(4L)));
+        expected.add(ItemMapper.mapToItemWithBookingsDto(item2, null, null));
         assertIterableEquals(expected, itemService.getByUserId(4L));
     }
 

@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemWithBookingsDto;
 import ru.practicum.shareit.item.service.ItemService;
 
 import java.util.Collection;
@@ -35,15 +36,15 @@ public class ItemController {
     }
 
     @GetMapping("/{itemId}")
-    public ItemDto getByItemId(@PathVariable Long itemId, @RequestHeader("X-Sharer-User-Id") Long userId) {
-        ItemDto itemDto = itemService.getByItemId(itemId);
+    public ItemWithBookingsDto getByItemId(@PathVariable Long itemId, @RequestHeader("X-Sharer-User-Id") Long userId) {
+        ItemWithBookingsDto itemDto = itemService.getByItemId(itemId, userId);
         log.info("User {} got item {}", userId, itemDto);
         return itemDto;
     }
 
     @GetMapping
-    public Collection<ItemDto> getAllUsersItems(@RequestHeader("X-Sharer-User-Id") Long userId) {
-        Collection<ItemDto> collection = itemService.getByUserId(userId);
+    public Collection<ItemWithBookingsDto> getAllUsersItems(@RequestHeader("X-Sharer-User-Id") Long userId) {
+        Collection<ItemWithBookingsDto> collection = itemService.getByUserId(userId);
         log.info("Given {} items belong to user {}", collection.size(), userId);
         return collection;
     }

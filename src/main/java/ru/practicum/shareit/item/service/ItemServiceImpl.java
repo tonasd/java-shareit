@@ -6,10 +6,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import ru.practicum.shareit.booking.repository.BookingIdAndBookerIdOnly;
+import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exception.ItemNotFoundException;
 import ru.practicum.shareit.exception.UserNotFoundException;
 import ru.practicum.shareit.item.ItemMapper;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemWithBookingsDto;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.User;
@@ -19,6 +22,8 @@ import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.validation.Validator;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -29,6 +34,7 @@ import java.util.stream.Collectors;
 public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
+    private final BookingRepository bookingRepository;
     private final Validator validator;
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
@@ -69,17 +75,40 @@ public class ItemServiceImpl implements ItemService {
         return ItemMapper.mapToItemDto(getItemById(itemId));
     }
 
+    public ItemWithBookingsDto getByItemId(Long itemId, Long requestFromUserId) {
+        Item item = getItemById(itemId);
+        BookingIdAndBookerIdOnly lastBooking = null;
+        BookingIdAndBookerIdOnly nextBooking = null;
+        if (item.getOwner().getId() == requestFromUserId) {
+            LocalDateTime now = LocalDateTime.now();
+            lastBooking = bookingRepository.findFirstByItemIdAndStartBeforeOrderByEndAsc(itemId, now);
+            nextBooking = bookingRepository.findFirstByItemIdAndStartAfterOrderByStartAsc(itemId, now);
+        }
+
+        return ItemMapper.mapToItemWithBookingsDto(item, lastBooking, nextBooking);
+    }
+
     @Transactional(readOnly = true)
     @Override
-    public Collection<ItemDto> getByUserId(Long userId) {
+    public Collection<ItemWithBookingsDto> getByUserId(Long userId) {
         // check if user exists
         if (!userRepository.existsById(userId)) {
             throw new UserNotFoundException(userId);
         }
 
-        return itemRepository.findAllByOwnerId(userId)
-                .map(ItemMapper::mapToItemDto)
-                .collect(Collectors.toUnmodifiableList());
+        Collection<Item> items = itemRepository.findAllByOwnerId(userId).collect(Collectors.toUnmodifiableList());
+        Collection<ItemWithBookingsDto> itemWithBookingsDtos = new ArrayList<>(items.size());
+        LocalDateTime now = LocalDateTime.now();
+        for (Item item : items) {
+            long itemId = item.getId();
+            BookingIdAndBookerIdOnly lastBooking = bookingRepository
+                    .findFirstByItemIdAndStartBeforeOrderByEndAsc(itemId, now);
+            BookingIdAndBookerIdOnly nextBooking = bookingRepository
+                    .findFirstByItemIdAndStartAfterOrderByStartAsc(itemId, now);
+            itemWithBookingsDtos.add(ItemMapper.mapToItemWithBookingsDto(item, lastBooking, nextBooking));
+        }
+
+        return itemWithBookingsDtos;
     }
 
     @Transactional(readOnly = true)
@@ -103,4 +132,5 @@ public class ItemServiceImpl implements ItemService {
     private Item getItemById(long itemId) {
         return itemRepository.findById(itemId).orElseThrow(() -> new ItemNotFoundException(itemId));
     }
+
 }

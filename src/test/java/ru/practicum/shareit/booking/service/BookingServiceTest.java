@@ -4,7 +4,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import ru.practicum.shareit.booking.BookingSearchState;
 import ru.practicum.shareit.booking.BookingStatus;
 import ru.practicum.shareit.booking.dto.BookingCreationDto;
@@ -194,11 +196,12 @@ class BookingServiceTest {
     @Test
     void findAllBookingsOfOwner() throws InterruptedException {
         long ownerId = 7;
+        long bookerId = 8;
         BookingDto actual = bookingService.create(
                 new BookingCreationDto(7,
                         LocalDateTime.now().plusSeconds(2),
                         LocalDateTime.now().plusSeconds(5),
-                        ownerId)
+                        bookerId)
         );
 
         //get ALL(1)

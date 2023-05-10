@@ -141,13 +141,9 @@ public class ItemServiceImpl implements ItemService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
         Booking booking = items.get(0);
-        Item item = booking.getItem();
-        User author = booking.getBooker();
-        Comment comment = new Comment();
-        comment.setText(text);
-        comment.setAuthor(author);
-        comment.setItem(item);
-        comment.setCreated(now);
+        Comment comment = CommentMapper.mapToComment(text,
+                booking.getBooker(),
+                booking.getItem());
 
         comment = commentRepository.save(comment);
         return CommentMapper.mapToDto(comment);

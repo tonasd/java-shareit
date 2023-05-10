@@ -8,7 +8,8 @@ import ru.practicum.shareit.item.dto.ItemWithBookingsDto;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.User;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
 public class ItemMapper {
     public static ItemDto mapToItemDto(Item item) {
@@ -33,7 +34,7 @@ public class ItemMapper {
     public static ItemWithBookingsDto mapToItemWithBookingsDto(Item item,
                                                                BookingIdAndBookerIdOnly lastBooking,
                                                                BookingIdAndBookerIdOnly nextBooking) {
-        return new ItemWithBookingsDto(mapToItemDto(item),lastBooking,nextBooking);
+        return new ItemWithBookingsDto(mapToItemDto(item), lastBooking, nextBooking);
     }
 
     public static ItemWithBookingsAndCommentsDto mapToItemWithBookingsAndCommentsDto(Item item,
@@ -42,24 +43,5 @@ public class ItemMapper {
                                                                                      List<CommentDto> comments) {
         return new ItemWithBookingsAndCommentsDto(mapToItemWithBookingsDto(item, lastBooking, nextBooking), comments);
     }
-
-    /*public static Collection<ItemWithBookingsDto> mapToItemWithBookingsDto(Collection<Item> items,
-                                                                           Collection<BookingIdAndBookerIdOnly> lastBookings,
-                                                                           Collection<BookingIdAndBookerIdOnly> nextBookings) {
-        if (items.size() != lastBookings.size() || items.size() != nextBookings.size()) {
-            throw new RuntimeException("Internal logic break in " + "mapToItemWithBookingsDto");
-        }
-        List<ItemWithBookingsDto> resultList = new ArrayList<>(items.size());
-        Iterator<Item> itemIterator = items.iterator();
-        Iterator<BookingIdAndBookerIdOnly> iteratorLastBookings = lastBookings.iterator();
-        Iterator<BookingIdAndBookerIdOnly> iteratorNextBookings = nextBookings.iterator();
-        while (itemIterator.hasNext()) {
-            resultList.add(
-                    mapToItemWithBookingsDto(itemIterator.next(), iteratorLastBookings.next(), iteratorNextBookings.next())
-            );
-        }
-
-        return resultList;
-    }*/
 }
 

@@ -1,17 +1,19 @@
-/*
 package ru.practicum.shareit.item;
 
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingCreationDto;
 import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.exception.UserNotFoundException;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemWithBookingsAndCommentsDto;
 import ru.practicum.shareit.item.dto.ItemWithBookingsDto;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.service.ItemService;
@@ -29,7 +31,9 @@ import java.util.stream.LongStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@Transactional
 @SpringBootTest
+@TestPropertySource(properties = {"db.name=test"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ItemServiceTest {
     @Autowired
@@ -122,6 +126,10 @@ class ItemServiceTest {
                         bookerId)
         ).getId();
         Thread.sleep(1000);
+        ItemWithBookingsAndCommentsDto itemBeforeAcceptOfBookings = itemService.getByItemId(itemDto.getId(), ownerId);
+        MatcherAssert.assertThat(itemBeforeAcceptOfBookings.getLastBooking(), Matchers.nullValue());
+
+        bookingService.ownerAcceptation(lastBookingId, ownerId, true);
         assertEquals(nextBookingId, itemService.getByItemId(itemDto.getId(), ownerId).getNextBooking().getId());
         assertEquals(lastBookingId, itemService.getByItemId(itemDto.getId(), ownerId).getLastBooking().getId());
 
@@ -171,4 +179,4 @@ class ItemServiceTest {
         itemService.update(6L, itemDto);
         assertTrue(itemService.findByText("Item6").isEmpty());
     }
-}*/
+}

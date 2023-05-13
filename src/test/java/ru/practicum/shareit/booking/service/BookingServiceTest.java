@@ -1,13 +1,11 @@
-/*
 package ru.practicum.shareit.booking.service;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.TestPropertySource;
 import ru.practicum.shareit.booking.BookingSearchState;
 import ru.practicum.shareit.booking.BookingStatus;
 import ru.practicum.shareit.booking.dto.BookingCreationDto;
@@ -29,6 +27,7 @@ import java.util.stream.LongStream;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
+@TestPropertySource(properties = {"db.name=testBooking"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class BookingServiceTest {
     @Autowired
@@ -171,9 +170,7 @@ class BookingServiceTest {
                         bookerId)
         );
 
-        bookingService.ownerAcceptation(actual1.getId(), actual1.getItem().getId() */
-/*itemId=ownerId*//*
-, true);
+        bookingService.ownerAcceptation(actual1.getId(), actual1.getItem().getId(), true);
 
 
         //get ALL(2)
@@ -225,4 +222,4 @@ class BookingServiceTest {
         Thread.sleep(2000);
         assertFalse(bookingService.findAllBookingsOfOwner(ownerId, BookingSearchState.CURRENT).isEmpty());
     }
-}*/
+}

@@ -3,12 +3,24 @@ package ru.practicum.shareit.item.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import ru.practicum.shareit.booking.Booking;
+import ru.practicum.shareit.booking.BookingStatus;
+import ru.practicum.shareit.booking.repository.BookingIdAndBookerIdOnly;
+import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exception.ItemNotFoundException;
 import ru.practicum.shareit.exception.UserNotFoundException;
+import ru.practicum.shareit.item.CommentMapper;
 import ru.practicum.shareit.item.ItemMapper;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemWithBookingsAndCommentsDto;
+import ru.practicum.shareit.item.dto.ItemWithBookingsDto;
+import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.item.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.repository.UserRepository;
@@ -17,7 +29,11 @@ import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.validation.Validator;
-import java.util.*;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,21 +41,24 @@ import java.util.stream.Collectors;
 public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
+    private final BookingRepository bookingRepository;
+    private final CommentRepository commentRepository;
     private final Validator validator;
 
-    @Override public ItemDto create(Long userId, ItemDto itemDto) {
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    @Override
+    public ItemDto create(Long userId, ItemDto itemDto) {
         validate(itemDto);
-        User owner = Optional.ofNullable(userRepository.get(userId)).orElseThrow(() -> new UserNotFoundException(userId));
+        User owner = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
         Item item = ItemMapper.mapToItem(itemDto, owner);
-        itemDto.setId(itemRepository.add(item));
-        return itemDto;
+        item = itemRepository.save(item);
+        return ItemMapper.mapToItemDto(item);
     }
 
-    @Override public ItemDto update(Long userId, ItemDto itemDto) {
-        Item item = itemRepository.getByItemId(itemDto.getId());
-        if (item == null) {
-            throw new ItemNotFoundException(itemDto.getId());
-        }
+    @Transactional
+    @Override
+    public ItemDto update(Long userId, ItemDto itemDto) {
+        Item item = getItemById(itemDto.getId());
 
         if (userId != item.getOwner().getId()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only owner allowed operation");
@@ -53,36 +72,81 @@ public class ItemServiceImpl implements ItemService {
         if (itemDto.getDescription() != null) {
             item.setDescription(itemDto.getDescription());
         }
+
         validate(ItemMapper.mapToItemDto(item));
-        itemRepository.update(item);
+        item = itemRepository.save(item);
         return ItemMapper.mapToItemDto(item);
     }
 
-    @Override public ItemDto getByItemId(Long itemId) {
-        Item item = itemRepository.getByItemId(itemId);
-        if (item == null) {
-            throw new ItemNotFoundException(itemId);
+    @Override
+    public ItemDto getByItemId(Long itemId) {
+        return ItemMapper.mapToItemDto(getItemById(itemId));
+    }
+
+    public ItemWithBookingsAndCommentsDto getByItemId(Long itemId, Long requestFromUserId) {
+        Item item = getItemById(itemId);
+        BookingIdAndBookerIdOnly lastBooking = null;
+        BookingIdAndBookerIdOnly nextBooking = null;
+        if (item.getOwner().getId() == requestFromUserId) {
+            LocalDateTime now = LocalDateTime.now();
+            lastBooking = bookingRepository.findFirstByItemIdAndStartBeforeAndStatusOrderByStartDesc(itemId, now, BookingStatus.APPROVED);
+            nextBooking = bookingRepository.findFirstByItemIdAndStartAfterAndStatusNotOrderByStartAsc(itemId, now, BookingStatus.REJECTED);
         }
-        return ItemMapper.mapToItemDto(item);
+
+        List<CommentDto> comments = commentRepository.findAllByItemId(itemId);
+
+        return ItemMapper.mapToItemWithBookingsAndCommentsDto(item, lastBooking, nextBooking, comments);
     }
 
-    @Override public Collection<ItemDto> getByUserId(Long userId) {
+    @Transactional(readOnly = true)
+    @Override
+    public Collection<ItemWithBookingsDto> getByUserId(Long userId) {
         // check if user exists
-        Optional.ofNullable(userRepository.get(userId)).orElseThrow(() -> new UserNotFoundException(userId));
+        if (!userRepository.existsById(userId)) {
+            throw new UserNotFoundException(userId);
+        }
 
-        return itemRepository.getAll().stream()
-                .filter(item -> Objects.equals(item.getOwner().getId(), userId))
-                .map(ItemMapper::mapToItemDto)
-                .collect(Collectors.toUnmodifiableList());
+        Collection<Item> items = itemRepository.findAllByOwnerId(userId).collect(Collectors.toUnmodifiableList());
+        Collection<ItemWithBookingsDto> itemWithBookingsDtos = new ArrayList<>(items.size());
+        LocalDateTime now = LocalDateTime.now();
+        for (Item item : items) {
+            long itemId = item.getId();
+            BookingIdAndBookerIdOnly lastBooking = bookingRepository
+                    .findFirstByItemIdAndStartBeforeAndStatusOrderByStartDesc(itemId, now, BookingStatus.APPROVED);
+            BookingIdAndBookerIdOnly nextBooking = bookingRepository
+                    .findFirstByItemIdAndStartAfterAndStatusNotOrderByStartAsc(itemId, now, BookingStatus.REJECTED);
+            itemWithBookingsDtos.add(ItemMapper.mapToItemWithBookingsDto(item, lastBooking, nextBooking));
+        }
+
+        return itemWithBookingsDtos;
     }
 
-    @Override public Collection<ItemDto> findByText(String text) {
+    @Transactional(readOnly = true)
+    @Override
+    public Collection<ItemDto> findByText(String text) {
         if (text.isBlank()) {
             return List.of();
         }
-        return itemRepository.findByText(text).stream()
+        return itemRepository.findAllByAvailableTrueAndNameContainsOrDescriptionContainsAllIgnoreCase(text)
                 .map(ItemMapper::mapToItemDto)
                 .collect(Collectors.toUnmodifiableList());
+    }
+
+    @Override
+    public CommentDto postCommentForItemFromAuthor(String text, Long itemId, Long authorId) {
+        LocalDateTime now = LocalDateTime.now();
+        List<Booking> items = bookingRepository
+                .findAllByItemIdAndBookerIdAndStatusIsAndEndBefore(itemId, authorId, BookingStatus.APPROVED, now);
+        if (items.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+        Booking booking = items.get(0);
+        Comment comment = CommentMapper.mapToComment(text,
+                booking.getBooker(),
+                booking.getItem());
+
+        comment = commentRepository.save(comment);
+        return CommentMapper.mapToDto(comment);
     }
 
     private void validate(@Valid ItemDto itemDto) {
@@ -91,4 +155,9 @@ public class ItemServiceImpl implements ItemService {
             throw new ConstraintViolationException(violations);
         }
     }
+
+    private Item getItemById(long itemId) {
+        return itemRepository.findById(itemId).orElseThrow(() -> new ItemNotFoundException(itemId));
+    }
+
 }

@@ -1,11 +1,10 @@
-package ru.practicum.shareit.booking;
+package ru.practicum.shareit.item.model;
 
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
-import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.User;
 
 import javax.persistence.*;
@@ -13,42 +12,37 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
-@Table(name = "bookings")
+@Table(name = "comments",
+        uniqueConstraints = {@UniqueConstraint(name = "ONE_USER_ONE_COMMENT", columnNames = {"item_id", "author_id"})})
 @Getter
 @Setter
 @ToString
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Booking {
+public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     long id;
 
-    @Column(name = "stat_date", nullable = false)
-    LocalDateTime start;
-
-    @Column(name = "end_date", nullable = false)
-    LocalDateTime end;
+    @Column(length = 2024, nullable = false)
+    String text;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "item_id", nullable = false)
     @ToString.Exclude
     Item item;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "booker_id", nullable = false)
     @ToString.Exclude
-    User booker;
+    User author;
 
-    @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "varchar(10) default 'WAITING'")
-    BookingStatus status;
+    @Column(nullable = false)
+    LocalDateTime created = LocalDateTime.now();
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Booking booking = (Booking) o;
-        return id != 0 && id == booking.id;
+        Comment comment = (Comment) o;
+        return id != 0 && id == comment.id;
     }
 
     @Override

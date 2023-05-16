@@ -1,18 +1,21 @@
 package ru.practicum.shareit.request;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import lombok.experimental.FieldDefaults;
 import ru.practicum.shareit.user.User;
 
 import javax.persistence.*;
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "requests")
 @Getter
 @Setter
 @ToString
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class ItemRequest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,7 +25,7 @@ public class ItemRequest {
     String description;
 
     @Column(nullable = false)
-    Instant created;
+    LocalDateTime created;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(nullable = false)

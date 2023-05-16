@@ -14,4 +14,10 @@ public class ItemRequestDto {
     long id;
     String description;
     String created;
+
+    public ItemRequestDto(ItemRequestDto obj) {
+        this.id = obj.id;
+        this.description = obj.description;
+        this.created = obj.created;
+    }
 }

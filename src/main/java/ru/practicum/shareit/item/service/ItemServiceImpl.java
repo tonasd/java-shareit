@@ -83,6 +83,8 @@ public class ItemServiceImpl implements ItemService {
         return ItemMapper.mapToItemDto(getItemById(itemId));
     }
 
+    @Transactional(readOnly = true)
+    @Override
     public ItemWithBookingsAndCommentsDto getByItemId(Long itemId, Long requestFromUserId) {
         Item item = getItemById(itemId);
         BookingIdAndBookerIdOnly lastBooking = null;

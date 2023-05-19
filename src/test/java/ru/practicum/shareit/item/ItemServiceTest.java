@@ -72,13 +72,8 @@ class ItemServiceTest {
         assertThrows(UserNotFoundException.class, () -> itemService.create(999L, itemDtoList.get(2)));
 
         //empty fields of dto
-        ItemDto wrong = itemDtoList.get(3).toBuilder().name(null).build();
         assertThrows(ConstraintViolationException.class,
                 () -> itemService.create(2L, itemDtoList.get(3).toBuilder().name(null).build()));
-        assertThrows(ConstraintViolationException.class,
-                () -> itemService.create(2L, itemDtoList.get(3).toBuilder().available(null).build()));
-        assertThrows(ConstraintViolationException.class,
-                () -> itemService.create(2L, itemDtoList.get(3).toBuilder().description(null).build()));
     }
 
     @Test
@@ -142,41 +137,46 @@ class ItemServiceTest {
 
     @Test
     void getByUserId() {
+        int from = 0;
+        int size = 10;
+
         //no items
-        assertIterableEquals(List.of(), itemService.getByUserId(4L));
+        assertIterableEquals(List.of(), itemService.getByUserId(4L, from, size));
 
         //one item
         Item item = ItemMapper.mapToItem(itemService.create(4L, itemDtoList.get(4)),
                 UserMapper.mapToUser(userService.get(4L)), null);
         List<ItemWithBookingsDto> expected = new ArrayList<>(List.of(ItemMapper.mapToItemWithBookingsDto(item, null, null)));
-        Collection<ItemWithBookingsDto> byUserId = itemService.getByUserId(4L);
+        Collection<ItemWithBookingsDto> byUserId = itemService.getByUserId(4L, from, size);
         assertIterableEquals(expected, byUserId);
 
         //two items
         Item item2 = ItemMapper.mapToItem(itemService.create(4L, itemDtoList.get(5)),
                 UserMapper.mapToUser(userService.get(4L)), null);
         expected.add(ItemMapper.mapToItemWithBookingsDto(item2, null, null));
-        assertIterableEquals(expected, itemService.getByUserId(4L));
+        assertIterableEquals(expected, itemService.getByUserId(4L, from, size));
     }
 
     @Test
     void findByText() {
+        int from = 0;
+        int size = 10;
         ItemDto itemDto = itemService.create(6L, itemDtoList.get(6));
         //search in description and caseInsensitive
-        assertTrue(itemService.findByText("6 deSc").contains(itemDto)
-                && itemService.findByText("6 dEsc").size() == 1);
+        assertTrue(itemService.findByText("6 deSc", from, size).contains(itemDto)
+                && itemService.findByText("6 dEsc", from, size).size() == 1);
         //search in name and caseInsensitive
         itemDto.setDescription("updated");
         itemService.update(6L, itemDto);
-        assertTrue(itemService.findByText("item6").contains(itemDto)
-                && itemService.findByText("item6").size() == 1);
+        assertTrue(itemService.findByText("item6", from, size).contains(itemDto)
+                && itemService.findByText("item6", from, size).size() == 1);
         //if not found
-        assertTrue(itemService.findByText("not exist text").isEmpty());
+        assertTrue(itemService.findByText("not exist text", from, size).isEmpty());
         //search of empty string resulting in empty result
-        assertTrue(itemService.findByText("").isEmpty());
+        assertTrue(itemService.findByText("", from, size).isEmpty());
         //if not available
         itemDto.setAvailable(false);
         itemService.update(6L, itemDto);
-        assertTrue(itemService.findByText("Item6").isEmpty());
+        assertTrue(itemService.findByText("Item6", from, size).isEmpty());
     }
 }

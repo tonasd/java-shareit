@@ -2,6 +2,8 @@ package ru.practicum.shareit.booking.service;
 
 import lombok.RequiredArgsConstructor;
 import org.hibernate.cfg.NotYetImplementedException;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -50,7 +52,6 @@ public class BookingServiceImpl implements BookingService {
         if (!item.isAvailable()) {
             throw new ItemNotAvailableException(bookingCreationDto.getItemId());
         }
-        //TODO not logged
         if (item.getOwner().getId() == bookingCreationDto.getBookerId()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner cannot book own item");
         }
@@ -89,33 +90,34 @@ public class BookingServiceImpl implements BookingService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<BookingDto> findAllBookingsOfBooker(long bookerId, BookingSearchState state) {
+    public List<BookingDto> findAllBookingsOfBooker(long bookerId, BookingSearchState state, int from, int size) {
         if (!userRepository.existsById(bookerId)) {
             throw new UserNotFoundException(bookerId);
         }
         Stream<Booking> bookingStream;
         final Sort sort = Sort.sort(Booking.class).by(Booking::getStart).descending();
+        final Pageable page = PageRequest.of(from / size, size, sort);
         switch (state) {
             case ALL:
-                bookingStream = bookingRepository.findAllByBookerId(bookerId, sort);
+                bookingStream = bookingRepository.findAllByBookerId(bookerId, page);
                 break;
             case PAST:
-                bookingStream = bookingRepository.findAllByBookerIdAndEndIsBefore(bookerId, LocalDateTime.now(), sort);
+                bookingStream = bookingRepository.findAllByBookerIdAndEndIsBefore(bookerId, LocalDateTime.now(), page);
                 break;
             case CURRENT:
-                bookingStream = bookingRepository.findAllCurrentBookerBookings(bookerId, LocalDateTime.now(), sort);
+                bookingStream = bookingRepository.findAllCurrentBookerBookings(bookerId, LocalDateTime.now(), page);
                 break;
             case FUTURE:
-                bookingStream = bookingRepository.findAllByBookerIdAndStartIsAfter(bookerId, LocalDateTime.now(), sort);
+                bookingStream = bookingRepository.findAllByBookerIdAndStartIsAfter(bookerId, LocalDateTime.now(), page);
                 break;
             case WAITING:
-                bookingStream = bookingRepository.findAllByBookerIdAndStatusIs(bookerId, BookingStatus.WAITING, sort);
+                bookingStream = bookingRepository.findAllByBookerIdAndStatusIs(bookerId, BookingStatus.WAITING, page);
                 break;
             case APPROVED:
-                bookingStream = bookingRepository.findAllByBookerIdAndStatusIs(bookerId, BookingStatus.APPROVED, sort);
+                bookingStream = bookingRepository.findAllByBookerIdAndStatusIs(bookerId, BookingStatus.APPROVED, page);
                 break;
             case REJECTED:
-                bookingStream = bookingRepository.findAllByBookerIdAndStatusIs(bookerId, BookingStatus.REJECTED, sort);
+                bookingStream = bookingRepository.findAllByBookerIdAndStatusIs(bookerId, BookingStatus.REJECTED, page);
                 break;
             default:
                 throw new NotYetImplementedException();
@@ -126,33 +128,34 @@ public class BookingServiceImpl implements BookingService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<BookingDto> findAllBookingsOfOwner(long ownerId, BookingSearchState state) {
+    public List<BookingDto> findAllBookingsOfOwner(long ownerId, BookingSearchState state, int from, int size) {
         if (!userRepository.existsById(ownerId)) {
             throw new UserNotFoundException(ownerId);
         }
         Stream<Booking> bookingStream;
         final Sort sort = Sort.sort(Booking.class).by(Booking::getStart).descending();
+        final Pageable page = PageRequest.of(from / size, size, sort);
         switch (state) {
             case ALL:
-                bookingStream = bookingRepository.findAllByItemOwnerId(ownerId, sort);
+                bookingStream = bookingRepository.findAllByItemOwnerId(ownerId, page);
                 break;
             case PAST:
-                bookingStream = bookingRepository.findAllByItemOwnerIdAndEndIsBefore(ownerId, LocalDateTime.now(), sort);
+                bookingStream = bookingRepository.findAllByItemOwnerIdAndEndIsBefore(ownerId, LocalDateTime.now(), page);
                 break;
             case CURRENT:
-                bookingStream = bookingRepository.findAllCurrentOwnerBookings(ownerId, LocalDateTime.now(), sort);
+                bookingStream = bookingRepository.findAllCurrentOwnerBookings(ownerId, LocalDateTime.now(), page);
                 break;
             case FUTURE:
-                bookingStream = bookingRepository.findAllByItemOwnerIdAndStartIsAfter(ownerId, LocalDateTime.now(), sort);
+                bookingStream = bookingRepository.findAllByItemOwnerIdAndStartIsAfter(ownerId, LocalDateTime.now(), page);
                 break;
             case WAITING:
-                bookingStream = bookingRepository.findAllByItemOwnerIdAndStatusIs(ownerId, BookingStatus.WAITING, sort);
+                bookingStream = bookingRepository.findAllByItemOwnerIdAndStatusIs(ownerId, BookingStatus.WAITING, page);
                 break;
             case APPROVED:
-                bookingStream = bookingRepository.findAllByItemOwnerIdAndStatusIs(ownerId, BookingStatus.APPROVED, sort);
+                bookingStream = bookingRepository.findAllByItemOwnerIdAndStatusIs(ownerId, BookingStatus.APPROVED, page);
                 break;
             case REJECTED:
-                bookingStream = bookingRepository.findAllByItemOwnerIdAndStatusIs(ownerId, BookingStatus.REJECTED, sort);
+                bookingStream = bookingRepository.findAllByItemOwnerIdAndStatusIs(ownerId, BookingStatus.REJECTED, page);
                 break;
             default:
                 throw new NotYetImplementedException();

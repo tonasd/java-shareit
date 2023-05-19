@@ -1,6 +1,7 @@
 package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -113,13 +114,14 @@ public class ItemServiceImpl implements ItemService {
 
     @Transactional(readOnly = true)
     @Override
-    public Collection<ItemWithBookingsDto> getByUserId(Long userId) {
+    public Collection<ItemWithBookingsDto> getByUserId(Long userId, int from, int size) {
         // check if user exists
         if (!userRepository.existsById(userId)) {
             throw new UserNotFoundException(userId);
         }
 
-        Collection<Item> items = itemRepository.findAllByOwnerId(userId).collect(Collectors.toUnmodifiableList());
+        PageRequest page = PageRequest.of(from / size, size);
+        Collection<Item> items = itemRepository.findAllByOwnerId(userId, page).collect(Collectors.toUnmodifiableList());
         Collection<ItemWithBookingsDto> itemWithBookingsDtos = new ArrayList<>(items.size());
         LocalDateTime now = LocalDateTime.now();
         for (Item item : items) {
@@ -136,11 +138,12 @@ public class ItemServiceImpl implements ItemService {
 
     @Transactional(readOnly = true)
     @Override
-    public Collection<ItemDto> findByText(String text) {
+    public Collection<ItemDto> findByText(String text, int from, int size) {
         if (text.isBlank()) {
             return List.of();
         }
-        return itemRepository.findAllByAvailableTrueAndNameContainsOrDescriptionContainsAllIgnoreCase(text)
+        PageRequest page = PageRequest.of(from / size, size);
+        return itemRepository.findAllByAvailableTrueAndNameContainsOrDescriptionContainsAllIgnoreCase(text, page)
                 .map(ItemMapper::mapToItemDto)
                 .collect(Collectors.toUnmodifiableList());
     }

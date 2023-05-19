@@ -147,14 +147,14 @@ class ItemServiceTest {
 
         //one item
         Item item = ItemMapper.mapToItem(itemService.create(4L, itemDtoList.get(4)),
-                UserMapper.mapToUser(userService.get(4L)));
+                UserMapper.mapToUser(userService.get(4L)), null);
         List<ItemWithBookingsDto> expected = new ArrayList<>(List.of(ItemMapper.mapToItemWithBookingsDto(item, null, null)));
         Collection<ItemWithBookingsDto> byUserId = itemService.getByUserId(4L);
         assertIterableEquals(expected, byUserId);
 
         //two items
         Item item2 = ItemMapper.mapToItem(itemService.create(4L, itemDtoList.get(5)),
-                UserMapper.mapToUser(userService.get(4L)));
+                UserMapper.mapToUser(userService.get(4L)), null);
         expected.add(ItemMapper.mapToItemWithBookingsDto(item2, null, null));
         assertIterableEquals(expected, itemService.getByUserId(4L));
     }

@@ -56,13 +56,15 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<ItemRequestDto> findAllPageable(long userId, int from, int size) {
+    public List<ItemRequestWithItemsDto> findAllPageable(long userId, int from, int size) {
         if (!userRepository.existsById(userId)) {
             throw new UserNotFoundException(userId);
         }
         PageRequest pageRequest = PageRequest.of(from / size, size, Sort.Direction.DESC, "created");
         Page<ItemRequest> page = itemRequestRepository.findAllByRequesterIdNot(userId, pageRequest);
-        return page.get().map(ItemRequestMapper::mapToItemRequestDto).collect(Collectors.toUnmodifiableList());
+        return page.get()
+                .map(ir -> ItemRequestMapper.mapToItemRequestWithItemsDto(ir,
+                        itemRepository.findAllByRequestId(ir.getId()))).collect(Collectors.toUnmodifiableList());
     }
 
     @Transactional(readOnly = true)

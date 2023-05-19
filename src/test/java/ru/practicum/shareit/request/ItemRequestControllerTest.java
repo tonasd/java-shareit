@@ -11,7 +11,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.shareit.request.dto.AddItemRequestDto;
-import ru.practicum.shareit.request.dto.ItemRequestDto;
+import ru.practicum.shareit.request.dto.ItemRequestWithItemsDto;
 
 import java.util.List;
 
@@ -90,7 +90,7 @@ class ItemRequestControllerTest {
         long requesterId = 1L;
         Integer from = 0;
         Integer size = 3;
-        List<ItemRequestDto> expectedList = List.of(new ItemRequestDto(), new ItemRequestDto());
+        List<ItemRequestWithItemsDto> expectedList = List.of(new ItemRequestWithItemsDto(), new ItemRequestWithItemsDto());
 
         when(itemRequestService.findAllPageable(requesterId, from, size))
                 .thenReturn(expectedList);

@@ -1,6 +1,7 @@
 package ru.practicum.shareit.request;
 
-import ru.practicum.shareit.item.dto.ItemForItemRequestDto;
+import ru.practicum.shareit.item.ItemMapper;
+import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.request.dto.AddItemRequestDto;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.dto.ItemRequestWithItemsDto;
@@ -9,6 +10,7 @@ import ru.practicum.shareit.user.User;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ItemRequestMapper {
     public static ItemRequest mapToItemRequest(AddItemRequestDto itemRequestDto, User requester) {
@@ -27,7 +29,8 @@ public class ItemRequestMapper {
     }
 
     public static ItemRequestWithItemsDto mapToItemRequestWithItemsDto(ItemRequest itemRequest,
-                                                      List<ItemForItemRequestDto> items) {
-        return new ItemRequestWithItemsDto(ItemRequestMapper.mapToItemRequestDto(itemRequest),items);
+                                                      List<Item> items) {
+        return new ItemRequestWithItemsDto(ItemRequestMapper.mapToItemRequestDto(itemRequest),
+                items.stream().map(ItemMapper::mapToItemDto).collect(Collectors.toUnmodifiableList()));
     }
 }

@@ -38,12 +38,12 @@ public class ItemRequestController {
     }
 
     @GetMapping("/all")
-    public List<ItemRequestDto> getAllPageable(@RequestHeader("X-Sharer-User-id") long userId,
+    public List<ItemRequestWithItemsDto> getAllPageable(@RequestHeader("X-Sharer-User-id") long userId,
                                                @RequestParam(defaultValue = "0")
                                                @PositiveOrZero(message = "from cannot be negative") int from,
                                                @RequestParam(defaultValue = "10")
                                                @Positive(message = "size must be positive") int size) {
-        List<ItemRequestDto> result = itemRequestService.findAllPageable(userId, from, size);
+        List<ItemRequestWithItemsDto> result = itemRequestService.findAllPageable(userId, from, size);
         log.info("For user {} given {} item requests of other users. Requested from {}, size {} ",
                 userId, result.size(), from, size);
         return result;

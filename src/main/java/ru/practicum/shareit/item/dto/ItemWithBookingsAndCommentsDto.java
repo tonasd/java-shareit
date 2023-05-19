@@ -15,7 +15,7 @@ public class ItemWithBookingsAndCommentsDto extends ItemWithBookingsDto {
     List<CommentDto> comments;
 
     public ItemWithBookingsAndCommentsDto(ItemWithBookingsDto itemWithBookingsDto, List<CommentDto> comments) {
-        super((ItemDto) itemWithBookingsDto, itemWithBookingsDto.getLastBooking(), itemWithBookingsDto.getNextBooking());
+        super(itemWithBookingsDto);
         this.comments = comments;
     }
 }

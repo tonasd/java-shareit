@@ -65,7 +65,7 @@ public class BookingController {
     @GetMapping("/owner")
     public List<BookingDto> findBookingsOfOwner(
             @RequestHeader("X-Sharer-User-Id") long ownerId,
-                                                @RequestParam(defaultValue = "ALL") String state,
+            @RequestParam(defaultValue = "ALL") String state,
             @RequestParam(defaultValue = "0") @PositiveOrZero(message = "from cannot be negative") int from,
             @RequestParam(defaultValue = "10") @Positive(message = "size must be positive") int size
     ) {

@@ -148,8 +148,7 @@ class ItemRequestServiceImplTest {
         service.findAllPageable(1, 0, 1);
 
         PageRequest actualRequest = pageRequestArgumentCaptor.getValue();
-        assertEquals(Sort.sort(ItemRequest.class).by(ItemRequest::getCreated).descending()
-                , actualRequest.getSort());
+        assertEquals(Sort.sort(ItemRequest.class).by(ItemRequest::getCreated).descending(), actualRequest.getSort());
     }
 
     @Test
@@ -178,8 +177,7 @@ class ItemRequestServiceImplTest {
         ItemRequestWithItemsDto actual = service.getRequestById(1, 1);
 
         assertEquals(expectedRequest.getId(), actual.getId());
-        assertEquals(expectedRequest.getCreated().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                , actual.getCreated());
+        assertEquals(expectedRequest.getCreated().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), actual.getCreated());
         assertEquals(expectedItems.size(), actual.getItems().size());
         assertEquals(actual.getItems().stream().mapToLong(ItemDto::getId).sum(),
                 expectedItems.stream().mapToLong(Item::getId).sum());

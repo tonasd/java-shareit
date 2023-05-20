@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @TestPropertySource(properties = {"db.name=testBooking"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class BookingServiceTest {
+class BookingServiceTest {  //legacy test, before theme about Mockito and integrated tests
     @Autowired
     private ItemService itemService;
     @Autowired

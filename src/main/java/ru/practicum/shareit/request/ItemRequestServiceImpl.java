@@ -45,9 +45,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     @Transactional(readOnly = true)
     @Override
     public List<ItemRequestWithItemsDto> findAllRequesterRequests(long requesterId) {
-        if (!userRepository.existsById(requesterId)) {
-            throw new UserNotFoundException(requesterId);
-        }
+        ifUserNotExistsThenThrowUserNotFoundException(requesterId);
         List<ItemRequest> dtoList = itemRequestRepository.findAllByRequesterId(requesterId, sort);
         return dtoList.stream()
                 .map(o -> ItemRequestMapper.mapToItemRequestWithItemsDto(o, itemRepository.findAllByRequestId(o.getId())))
@@ -57,9 +55,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     @Transactional(readOnly = true)
     @Override
     public List<ItemRequestWithItemsDto> findAllPageable(long userId, int from, int size) {
-        if (!userRepository.existsById(userId)) {
-            throw new UserNotFoundException(userId);
-        }
+        ifUserNotExistsThenThrowUserNotFoundException(userId);
         PageRequest pageRequest = PageRequest.of(from / size, size, Sort.Direction.DESC, "created");
         Page<ItemRequest> page = itemRequestRepository.findAllByRequesterIdNot(userId, pageRequest);
         return page.get()
@@ -70,13 +66,15 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     @Transactional(readOnly = true)
     @Override
     public ItemRequestWithItemsDto getRequestById(long userId, long requestId) {
-        if (!userRepository.existsById(userId)) {
-            throw new UserNotFoundException(userId);
-        }
+        ifUserNotExistsThenThrowUserNotFoundException(userId);
         ItemRequest request = itemRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RequestNotFoundException(requestId));
 
         return ItemRequestMapper.mapToItemRequestWithItemsDto(request, itemRepository.findAllByRequestId(requestId));
+    }
+
+    private void ifUserNotExistsThenThrowUserNotFoundException(long userId) {
+        if (!userRepository.existsById(userId)) throw new UserNotFoundException(userId);
     }
 
     private void validate(AddItemRequestDto itemRequestDto) {

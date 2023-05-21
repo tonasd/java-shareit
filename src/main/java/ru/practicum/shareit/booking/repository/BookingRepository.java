@@ -32,7 +32,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             "JOIN FETCH b.booker " +
             "WHERE b.booker.id = :bookerId " +
             "AND :now BETWEEN b.start AND b.end")
-    Stream<Booking> findAllCurrentBookerBookings(long bookerId, LocalDateTime now, Pageable sort);
+    Stream<Booking> findAllCurrentBookerBookings(long bookerId, LocalDateTime now, Pageable page);
 
     Stream<Booking> findAllByItemOwnerIdAndStatusIs(long ownerId, BookingStatus bookingStatus, Pageable page);
 

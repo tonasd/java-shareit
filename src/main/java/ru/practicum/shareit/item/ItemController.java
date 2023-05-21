@@ -78,7 +78,7 @@ public class ItemController {
                                          @RequestBody Map<String, String> requestBody) {
         if (!requestBody.containsKey("text") || requestBody.get("text").isBlank()) {
             RuntimeException e = new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Body must have not be empty text property");
+                    "Body must have not empty text property");
             log.warn(e.getMessage());
             throw e;
         }

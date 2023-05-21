@@ -10,8 +10,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingCreationDto;
+import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.exception.UserNotFoundException;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemWithBookingsAndCommentsDto;
 import ru.practicum.shareit.item.dto.ItemWithBookingsDto;
@@ -178,5 +180,30 @@ class ItemServiceTest {
         itemDto.setAvailable(false);
         itemService.update(6L, itemDto);
         assertTrue(itemService.findByText("Item6", from, size).isEmpty());
+    }
+
+    @Test
+    void postCommentForItemFromAuthor() throws InterruptedException {
+        ItemDto dto = itemDtoList.get(7);
+        long authorId = 7L;
+        ItemDto expected = itemService.create(authorId - 1, dto);
+        String text = "text";
+        long itemId = expected.getId();
+        BookingCreationDto bookingDto = new BookingCreationDto();
+        bookingDto.setBookerId(authorId);
+        bookingDto.setItemId(itemId);
+        bookingDto.setStart(LocalDateTime.now().plusNanos(100000000));
+        bookingDto.setEnd(LocalDateTime.now().plusNanos(120000000));
+        BookingDto booking = bookingService.create(bookingDto);
+        bookingService.ownerAcceptation(booking.getId(), authorId - 1, true);
+        Thread.sleep(1000);
+
+
+        CommentDto actual = itemService.postCommentForItemFromAuthor(text, itemId, authorId);
+
+        assertEquals(text, actual.getText());
+        assertEquals(userService.get(authorId).getName(), actual.getAuthorName());
+        assertNotNull(actual.getCreated());
+        assertNotEquals(0, actual.getId());
     }
 }

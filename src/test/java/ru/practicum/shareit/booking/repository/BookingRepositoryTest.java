@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@DataJpaTest
+@DataJpaTest(properties = "db.name=testBookingRepository")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class BookingRepositoryTest {
 

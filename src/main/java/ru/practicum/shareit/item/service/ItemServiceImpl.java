@@ -31,7 +31,6 @@ import ru.practicum.shareit.user.repository.UserRepository;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
-import javax.validation.Valid;
 import javax.validation.Validator;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -42,6 +41,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
@@ -95,7 +95,6 @@ public class ItemServiceImpl implements ItemService {
         return ItemMapper.mapToItemDto(getItemById(itemId));
     }
 
-    @Transactional(readOnly = true)
     @Override
     public ItemWithBookingsAndCommentsDto getByItemId(Long itemId, Long requestFromUserId) {
         Item item = getItemById(itemId);
@@ -112,7 +111,6 @@ public class ItemServiceImpl implements ItemService {
         return ItemMapper.mapToItemWithBookingsAndCommentsDto(item, lastBooking, nextBooking, comments);
     }
 
-    @Transactional(readOnly = true)
     @Override
     public Collection<ItemWithBookingsDto> getByUserId(Long userId, int from, int size) {
         // check if user exists
@@ -136,7 +134,6 @@ public class ItemServiceImpl implements ItemService {
         return itemWithBookingsDtos;
     }
 
-    @Transactional(readOnly = true)
     @Override
     public Collection<ItemDto> findByText(String text, int from, int size) {
         if (text.isBlank()) {
@@ -148,6 +145,7 @@ public class ItemServiceImpl implements ItemService {
                 .collect(Collectors.toUnmodifiableList());
     }
 
+    @Transactional
     @Override
     public CommentDto postCommentForItemFromAuthor(String text, Long itemId, Long authorId) {
         LocalDateTime now = LocalDateTime.now();
@@ -165,7 +163,7 @@ public class ItemServiceImpl implements ItemService {
         return CommentMapper.mapToDto(comment);
     }
 
-    private void validate(@Valid ItemDto itemDto) {
+    private void validate(ItemDto itemDto) {
         Set<ConstraintViolation<ItemDto>> violations = validator.validate(itemDto);
         if (!violations.isEmpty()) {
             throw new ConstraintViolationException(violations);

@@ -37,14 +37,31 @@ public class ItemMapper {
     public static ItemWithBookingsDto mapToItemWithBookingsDto(Item item,
                                                                BookingIdAndBookerIdOnly lastBooking,
                                                                BookingIdAndBookerIdOnly nextBooking) {
-        return new ItemWithBookingsDto(mapToItemDto(item), lastBooking, nextBooking);
+        ItemWithBookingsDto result = new ItemWithBookingsDto();
+        result.setId(item.getId());
+        result.setName(item.getName());
+        result.setDescription(item.getDescription());
+        result.setAvailable(item.isAvailable());
+        result.setLastBooking(lastBooking);
+        result.setNextBooking(nextBooking);
+        result.setRequestId(item.getRequest() != null ? item.getRequest().getId() : null);
+        return result;
     }
 
     public static ItemWithBookingsAndCommentsDto mapToItemWithBookingsAndCommentsDto(Item item,
                                                                                      BookingIdAndBookerIdOnly lastBooking,
                                                                                      BookingIdAndBookerIdOnly nextBooking,
                                                                                      List<CommentDto> comments) {
-        return new ItemWithBookingsAndCommentsDto(mapToItemWithBookingsDto(item, lastBooking, nextBooking), comments);
+        ItemWithBookingsAndCommentsDto result = new ItemWithBookingsAndCommentsDto();
+        result.setId(item.getId());
+        result.setName(item.getName());
+        result.setDescription(item.getDescription());
+        result.setAvailable(item.isAvailable());
+        result.setLastBooking(lastBooking);
+        result.setNextBooking(nextBooking);
+        result.setComments(comments);
+        result.setRequestId(item.getRequest() != null ? item.getRequest().getId() : null);
+        return result;
     }
 }
 

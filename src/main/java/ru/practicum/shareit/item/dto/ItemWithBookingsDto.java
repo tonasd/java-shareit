@@ -17,14 +17,4 @@ public class ItemWithBookingsDto extends ItemDto {
 
     @JsonInclude(JsonInclude.Include.ALWAYS)
     BookingIdAndBookerIdOnly nextBooking;
-
-    public ItemWithBookingsDto(ItemWithBookingsDto from) {
-        this((ItemDto) from, from.lastBooking, from.nextBooking);
-    }
-
-    public ItemWithBookingsDto(ItemDto itemDto, BookingIdAndBookerIdOnly lastBooking, BookingIdAndBookerIdOnly nextBooking) {
-        super(itemDto);
-        this.lastBooking = lastBooking;
-        this.nextBooking = nextBooking;
-    }
 }

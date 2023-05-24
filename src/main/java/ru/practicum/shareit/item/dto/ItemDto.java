@@ -20,12 +20,4 @@ public class ItemDto {
     @NotBlank @Size(max = 64) String name;
     @NotBlank @Size(max = 256) String description;
     Long requestId;
-
-    public ItemDto(ItemDto from) {
-        this.id = from.id;
-        this.available = from.available;
-        this.name = from.name;
-        this.description = from.description;
-        this.requestId = from.requestId;
-    }
 }

@@ -16,9 +16,9 @@ public interface ItemService {
 
     ItemWithBookingsAndCommentsDto getByItemId(Long itemId, Long requestFromUserId);
 
-    Collection<ItemWithBookingsDto> getByUserId(Long userId);
+    Collection<ItemWithBookingsDto> getByUserId(Long userId, int from, int size);
 
-    Collection<ItemDto> findByText(String text);
+    Collection<ItemDto> findByText(String text, int from, int size);
 
 
     CommentDto postCommentForItemFromAuthor(String text, Long itemId, Long authorId);

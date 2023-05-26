@@ -1,6 +1,6 @@
 package ru.practicum.shareit.booking.repository;
 
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import ru.practicum.shareit.booking.Booking;
@@ -18,13 +18,13 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             "AND (b.item.owner.id = :userId OR b.booker.id = :userId)")
     Optional<Booking> findBookingByOwnerOrBooker(long bookingId, long userId);
 
-    Stream<Booking> findAllByBookerId(long bookerId, Sort sort);
+    Stream<Booking> findAllByBookerId(long bookerId, Pageable page);
 
-    Stream<Booking> findAllByBookerIdAndStatusIs(long bookerId, BookingStatus bookingStatus, Sort sort);
+    Stream<Booking> findAllByBookerIdAndStatusIs(long bookerId, BookingStatus bookingStatus, Pageable page);
 
-    Stream<Booking> findAllByBookerIdAndEndIsBefore(long bookerId, LocalDateTime now, Sort sort);
+    Stream<Booking> findAllByBookerIdAndEndIsBefore(long bookerId, LocalDateTime now, Pageable page);
 
-    Stream<Booking> findAllByBookerIdAndStartIsAfter(long bookerId, LocalDateTime now, Sort sort);
+    Stream<Booking> findAllByBookerIdAndStartIsAfter(long bookerId, LocalDateTime now, Pageable page);
 
     @Query(value = "SELECT b FROM Booking AS b " +
             "JOIN FETCH b.item AS i " +
@@ -32,15 +32,15 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             "JOIN FETCH b.booker " +
             "WHERE b.booker.id = :bookerId " +
             "AND :now BETWEEN b.start AND b.end")
-    Stream<Booking> findAllCurrentBookerBookings(long bookerId, LocalDateTime now, Sort sort);
+    Stream<Booking> findAllCurrentBookerBookings(long bookerId, LocalDateTime now, Pageable page);
 
-    Stream<Booking> findAllByItemOwnerIdAndStatusIs(long ownerId, BookingStatus bookingStatus, Sort sort);
+    Stream<Booking> findAllByItemOwnerIdAndStatusIs(long ownerId, BookingStatus bookingStatus, Pageable page);
 
-    Stream<Booking> findAllByItemOwnerIdAndStartIsAfter(long ownerId, LocalDateTime now, Sort sort);
+    Stream<Booking> findAllByItemOwnerIdAndStartIsAfter(long ownerId, LocalDateTime now, Pageable page);
 
-    Stream<Booking> findAllByItemOwnerId(long ownerId, Sort sort);
+    Stream<Booking> findAllByItemOwnerId(long ownerId, Pageable page);
 
-    Stream<Booking> findAllByItemOwnerIdAndEndIsBefore(long ownerId, LocalDateTime now, Sort sort);
+    Stream<Booking> findAllByItemOwnerIdAndEndIsBefore(long ownerId, LocalDateTime now, Pageable page);
 
     @Query(value = "SELECT b FROM Booking AS b " +
             "JOIN FETCH b.item AS i " +
@@ -48,7 +48,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             "JOIN FETCH b.booker " +
             "WHERE b.item.owner.id = :ownerId " +
             "AND :now BETWEEN b.start AND b.end")
-    Stream<Booking> findAllCurrentOwnerBookings(long ownerId, LocalDateTime now, Sort sort);
+    Stream<Booking> findAllCurrentOwnerBookings(long ownerId, LocalDateTime now, Pageable page);
 
     // find next booking
     BookingIdAndBookerIdOnly findFirstByItemIdAndStartAfterAndStatusNotOrderByStartAsc(long itemId,

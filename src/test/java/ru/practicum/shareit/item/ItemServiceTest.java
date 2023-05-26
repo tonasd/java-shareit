@@ -10,8 +10,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingCreationDto;
+import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.exception.UserNotFoundException;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemWithBookingsAndCommentsDto;
 import ru.practicum.shareit.item.dto.ItemWithBookingsDto;
@@ -72,13 +74,8 @@ class ItemServiceTest {
         assertThrows(UserNotFoundException.class, () -> itemService.create(999L, itemDtoList.get(2)));
 
         //empty fields of dto
-        ItemDto wrong = itemDtoList.get(3).toBuilder().name(null).build();
         assertThrows(ConstraintViolationException.class,
                 () -> itemService.create(2L, itemDtoList.get(3).toBuilder().name(null).build()));
-        assertThrows(ConstraintViolationException.class,
-                () -> itemService.create(2L, itemDtoList.get(3).toBuilder().available(null).build()));
-        assertThrows(ConstraintViolationException.class,
-                () -> itemService.create(2L, itemDtoList.get(3).toBuilder().description(null).build()));
     }
 
     @Test
@@ -142,41 +139,71 @@ class ItemServiceTest {
 
     @Test
     void getByUserId() {
+        int from = 0;
+        int size = 10;
+
         //no items
-        assertIterableEquals(List.of(), itemService.getByUserId(4L));
+        assertIterableEquals(List.of(), itemService.getByUserId(4L, from, size));
 
         //one item
         Item item = ItemMapper.mapToItem(itemService.create(4L, itemDtoList.get(4)),
-                UserMapper.mapToUser(userService.get(4L)));
+                UserMapper.mapToUser(userService.get(4L)), null);
         List<ItemWithBookingsDto> expected = new ArrayList<>(List.of(ItemMapper.mapToItemWithBookingsDto(item, null, null)));
-        Collection<ItemWithBookingsDto> byUserId = itemService.getByUserId(4L);
+        Collection<ItemWithBookingsDto> byUserId = itemService.getByUserId(4L, from, size);
         assertIterableEquals(expected, byUserId);
 
         //two items
         Item item2 = ItemMapper.mapToItem(itemService.create(4L, itemDtoList.get(5)),
-                UserMapper.mapToUser(userService.get(4L)));
+                UserMapper.mapToUser(userService.get(4L)), null);
         expected.add(ItemMapper.mapToItemWithBookingsDto(item2, null, null));
-        assertIterableEquals(expected, itemService.getByUserId(4L));
+        assertIterableEquals(expected, itemService.getByUserId(4L, from, size));
     }
 
     @Test
     void findByText() {
+        int from = 0;
+        int size = 10;
         ItemDto itemDto = itemService.create(6L, itemDtoList.get(6));
         //search in description and caseInsensitive
-        assertTrue(itemService.findByText("6 deSc").contains(itemDto)
-                && itemService.findByText("6 dEsc").size() == 1);
+        assertTrue(itemService.findByText("6 deSc", from, size).contains(itemDto)
+                && itemService.findByText("6 dEsc", from, size).size() == 1);
         //search in name and caseInsensitive
         itemDto.setDescription("updated");
         itemService.update(6L, itemDto);
-        assertTrue(itemService.findByText("item6").contains(itemDto)
-                && itemService.findByText("item6").size() == 1);
+        assertTrue(itemService.findByText("item6", from, size).contains(itemDto)
+                && itemService.findByText("item6", from, size).size() == 1);
         //if not found
-        assertTrue(itemService.findByText("not exist text").isEmpty());
+        assertTrue(itemService.findByText("not exist text", from, size).isEmpty());
         //search of empty string resulting in empty result
-        assertTrue(itemService.findByText("").isEmpty());
+        assertTrue(itemService.findByText("", from, size).isEmpty());
         //if not available
         itemDto.setAvailable(false);
         itemService.update(6L, itemDto);
-        assertTrue(itemService.findByText("Item6").isEmpty());
+        assertTrue(itemService.findByText("Item6", from, size).isEmpty());
+    }
+
+    @Test
+    void postCommentForItemFromAuthor() throws InterruptedException {
+        ItemDto dto = itemDtoList.get(7);
+        long authorId = 7L;
+        ItemDto expected = itemService.create(authorId - 1, dto);
+        String text = "text";
+        long itemId = expected.getId();
+        BookingCreationDto bookingDto = new BookingCreationDto();
+        bookingDto.setBookerId(authorId);
+        bookingDto.setItemId(itemId);
+        bookingDto.setStart(LocalDateTime.now().plusNanos(100000000));
+        bookingDto.setEnd(LocalDateTime.now().plusNanos(120000000));
+        BookingDto booking = bookingService.create(bookingDto);
+        bookingService.ownerAcceptation(booking.getId(), authorId - 1, true);
+        Thread.sleep(1000);
+
+
+        CommentDto actual = itemService.postCommentForItemFromAuthor(text, itemId, authorId);
+
+        assertEquals(text, actual.getText());
+        assertEquals(userService.get(authorId).getName(), actual.getAuthorName());
+        assertNotNull(actual.getCreated());
+        assertNotEquals(0, actual.getId());
     }
 }

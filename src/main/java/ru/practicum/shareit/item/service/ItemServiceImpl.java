@@ -1,6 +1,7 @@
 package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -11,6 +12,7 @@ import ru.practicum.shareit.booking.BookingStatus;
 import ru.practicum.shareit.booking.repository.BookingIdAndBookerIdOnly;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exception.ItemNotFoundException;
+import ru.practicum.shareit.exception.RequestNotFoundException;
 import ru.practicum.shareit.exception.UserNotFoundException;
 import ru.practicum.shareit.item.CommentMapper;
 import ru.practicum.shareit.item.ItemMapper;
@@ -22,12 +24,13 @@ import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.request.ItemRequest;
+import ru.practicum.shareit.request.ItemRequestRepository;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
-import javax.validation.Valid;
 import javax.validation.Validator;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -38,11 +41,13 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
     private final CommentRepository commentRepository;
+    private final ItemRequestRepository requestRepository;
     private final Validator validator;
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
@@ -50,7 +55,14 @@ public class ItemServiceImpl implements ItemService {
     public ItemDto create(Long userId, ItemDto itemDto) {
         validate(itemDto);
         User owner = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
-        Item item = ItemMapper.mapToItem(itemDto, owner);
+        ItemRequest request;
+        if (itemDto.getRequestId() == null) {
+            request = null;
+        } else {
+            request = requestRepository.findById(itemDto.getRequestId())
+                    .orElseThrow(() -> new RequestNotFoundException(itemDto.getRequestId()));
+        }
+        Item item = ItemMapper.mapToItem(itemDto, owner, request);
         item = itemRepository.save(item);
         return ItemMapper.mapToItemDto(item);
     }
@@ -83,6 +95,7 @@ public class ItemServiceImpl implements ItemService {
         return ItemMapper.mapToItemDto(getItemById(itemId));
     }
 
+    @Override
     public ItemWithBookingsAndCommentsDto getByItemId(Long itemId, Long requestFromUserId) {
         Item item = getItemById(itemId);
         BookingIdAndBookerIdOnly lastBooking = null;
@@ -98,15 +111,15 @@ public class ItemServiceImpl implements ItemService {
         return ItemMapper.mapToItemWithBookingsAndCommentsDto(item, lastBooking, nextBooking, comments);
     }
 
-    @Transactional(readOnly = true)
     @Override
-    public Collection<ItemWithBookingsDto> getByUserId(Long userId) {
+    public Collection<ItemWithBookingsDto> getByUserId(Long userId, int from, int size) {
         // check if user exists
         if (!userRepository.existsById(userId)) {
             throw new UserNotFoundException(userId);
         }
 
-        Collection<Item> items = itemRepository.findAllByOwnerId(userId).collect(Collectors.toUnmodifiableList());
+        PageRequest page = PageRequest.of(from / size, size);
+        Collection<Item> items = itemRepository.findAllByOwnerId(userId, page).collect(Collectors.toUnmodifiableList());
         Collection<ItemWithBookingsDto> itemWithBookingsDtos = new ArrayList<>(items.size());
         LocalDateTime now = LocalDateTime.now();
         for (Item item : items) {
@@ -121,17 +134,18 @@ public class ItemServiceImpl implements ItemService {
         return itemWithBookingsDtos;
     }
 
-    @Transactional(readOnly = true)
     @Override
-    public Collection<ItemDto> findByText(String text) {
+    public Collection<ItemDto> findByText(String text, int from, int size) {
         if (text.isBlank()) {
             return List.of();
         }
-        return itemRepository.findAllByAvailableTrueAndNameContainsOrDescriptionContainsAllIgnoreCase(text)
+        PageRequest page = PageRequest.of(from / size, size);
+        return itemRepository.findAllByAvailableTrueAndNameContainsOrDescriptionContainsAllIgnoreCase(text, page)
                 .map(ItemMapper::mapToItemDto)
                 .collect(Collectors.toUnmodifiableList());
     }
 
+    @Transactional
     @Override
     public CommentDto postCommentForItemFromAuthor(String text, Long itemId, Long authorId) {
         LocalDateTime now = LocalDateTime.now();
@@ -149,7 +163,7 @@ public class ItemServiceImpl implements ItemService {
         return CommentMapper.mapToDto(comment);
     }
 
-    private void validate(@Valid ItemDto itemDto) {
+    private void validate(ItemDto itemDto) {
         Set<ConstraintViolation<ItemDto>> violations = validator.validate(itemDto);
         if (!violations.isEmpty()) {
             throw new ConstraintViolationException(violations);

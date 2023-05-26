@@ -13,9 +13,4 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ItemWithBookingsAndCommentsDto extends ItemWithBookingsDto {
     List<CommentDto> comments;
-
-    public ItemWithBookingsAndCommentsDto(ItemWithBookingsDto itemWithBookingsDto, List<CommentDto> comments) {
-        super((ItemDto) itemWithBookingsDto, itemWithBookingsDto.getLastBooking(), itemWithBookingsDto.getNextBooking());
-        this.comments = comments;
-    }
 }

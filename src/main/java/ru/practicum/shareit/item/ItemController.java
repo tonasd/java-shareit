@@ -3,6 +3,7 @@ package ru.practicum.shareit.item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ru.practicum.shareit.item.dto.CommentDto;
@@ -11,8 +12,8 @@ import ru.practicum.shareit.item.dto.ItemWithBookingsAndCommentsDto;
 import ru.practicum.shareit.item.dto.ItemWithBookingsDto;
 import ru.practicum.shareit.item.service.ItemService;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.Collection;
 import java.util.Map;
 
@@ -20,6 +21,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/items")
 @RequiredArgsConstructor
+@Validated
 public class ItemController {
     private final ItemService itemService;
 
@@ -49,15 +51,23 @@ public class ItemController {
     }
 
     @GetMapping
-    public Collection<ItemWithBookingsDto> getAllUsersItems(@RequestHeader("X-Sharer-User-Id") Long userId) {
-        Collection<ItemWithBookingsDto> collection = itemService.getByUserId(userId);
+    public Collection<ItemWithBookingsDto> getAllUsersItems(
+            @RequestHeader("X-Sharer-User-Id") Long userId,
+            @RequestParam(defaultValue = "0") @PositiveOrZero(message = "from cannot be negative") int from,
+            @RequestParam(defaultValue = "10") @Positive(message = "size must be positive") int size
+    ) {
+        Collection<ItemWithBookingsDto> collection = itemService.getByUserId(userId, from, size);
         log.info("Given {} items belong to user {}", collection.size(), userId);
         return collection;
     }
 
     @GetMapping("/search")
-    public Collection<ItemDto> findByText(@RequestParam() String text) {
-        Collection<ItemDto> collection = itemService.findByText(text);
+    public Collection<ItemDto> findByText(
+            @RequestParam() String text,
+            @RequestParam(defaultValue = "0") @PositiveOrZero(message = "from cannot be negative") int from,
+            @RequestParam(defaultValue = "10") @Positive(message = "size must be positive") int size
+    ) {
+        Collection<ItemDto> collection = itemService.findByText(text, from, size);
         log.info("It has been found {} items with text \"{}\"", collection.size(), text);
         return collection;
     }
@@ -65,10 +75,10 @@ public class ItemController {
     @PostMapping("/{itemId}/comment")
     public CommentDto postCommentForItem(@RequestHeader("X-Sharer-User-id") Long authorId,
                                          @PathVariable Long itemId,
-                                         @RequestBody @Valid @NotBlank Map<String, String> requestBody) {
+                                         @RequestBody Map<String, String> requestBody) {
         if (!requestBody.containsKey("text") || requestBody.get("text").isBlank()) {
             RuntimeException e = new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Body must have not be empty text property");
+                    "Body must have not empty text property");
             log.warn(e.getMessage());
             throw e;
         }

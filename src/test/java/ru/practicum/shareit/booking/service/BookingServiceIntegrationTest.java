@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @TestPropertySource(properties = {"db.name=testBooking"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class BookingServiceTest {
+class BookingServiceIntegrationTest {  //legacy test, before theme about Mockito and integrated tests
     @Autowired
     private ItemService itemService;
     @Autowired
@@ -67,6 +67,7 @@ class BookingServiceTest {
         creationDto2.setItemId(2L);
         creationDto2.setStart(LocalDateTime.now().plusSeconds(1));
         creationDto2.setEnd(creationDto2.getStart().plusSeconds(2));
+
     }
 
     @Test
@@ -156,6 +157,9 @@ class BookingServiceTest {
 
     @Test
     void findAllBookingsOfBooker() throws InterruptedException {
+        int from = 0;
+        int size = 10;
+
         long bookerId = 3;
         BookingDto actual1 = bookingService.create(
                 new BookingCreationDto(5,
@@ -174,27 +178,30 @@ class BookingServiceTest {
 
 
         //get ALL(2)
-        assertEquals(2, bookingService.findAllBookingsOfBooker(bookerId, BookingSearchState.ALL).size());
+        assertEquals(2, bookingService.findAllBookingsOfBooker(bookerId, BookingSearchState.ALL, from, size).size());
 
         //get WAITING(1)
-        assertEquals(1, bookingService.findAllBookingsOfBooker(bookerId, BookingSearchState.WAITING).size());
+        assertEquals(1, bookingService.findAllBookingsOfBooker(bookerId, BookingSearchState.WAITING, from, size).size());
 
         //get REJECTED(0)
-        assertEquals(0, bookingService.findAllBookingsOfBooker(bookerId, BookingSearchState.REJECTED).size());
+        assertEquals(0, bookingService.findAllBookingsOfBooker(bookerId, BookingSearchState.REJECTED, from, size).size());
 
         // get FUTURE(2)
-        List<BookingDto> allBookingsOfBooker = bookingService.findAllBookingsOfBooker(bookerId, BookingSearchState.FUTURE);
+        List<BookingDto> allBookingsOfBooker = bookingService.findAllBookingsOfBooker(bookerId, BookingSearchState.FUTURE, from, size);
         assertEquals(2, allBookingsOfBooker.size());
         assertEquals(actual2.getId(), allBookingsOfBooker.get(0).getId()); //check sorting
 
         //get CURRENT
-        assertTrue(bookingService.findAllBookingsOfBooker(bookerId, BookingSearchState.CURRENT).isEmpty());
+        assertTrue(bookingService.findAllBookingsOfBooker(bookerId, BookingSearchState.CURRENT, from, size).isEmpty());
         Thread.sleep(2000);
-        assertFalse(bookingService.findAllBookingsOfBooker(bookerId, BookingSearchState.CURRENT).isEmpty());
+        assertFalse(bookingService.findAllBookingsOfBooker(bookerId, BookingSearchState.CURRENT, from, size).isEmpty());
     }
 
     @Test
     void findAllBookingsOfOwner() throws InterruptedException {
+        int from = 0;
+        int size = 10;
+
         long ownerId = 7;
         long bookerId = 8;
         BookingDto actual = bookingService.create(
@@ -205,21 +212,21 @@ class BookingServiceTest {
         );
 
         //get ALL(1)
-        assertEquals(1, bookingService.findAllBookingsOfOwner(ownerId, BookingSearchState.ALL).size());
+        assertEquals(1, bookingService.findAllBookingsOfOwner(ownerId, BookingSearchState.ALL, from, size).size());
 
         //get WAITING(1)
-        assertEquals(1, bookingService.findAllBookingsOfOwner(ownerId, BookingSearchState.WAITING).size());
+        assertEquals(1, bookingService.findAllBookingsOfOwner(ownerId, BookingSearchState.WAITING, from, size).size());
         bookingService.ownerAcceptation(actual.getId(), ownerId, false);
-        assertTrue(bookingService.findAllBookingsOfOwner(ownerId, BookingSearchState.WAITING).isEmpty());
-        assertEquals(1, bookingService.findAllBookingsOfOwner(ownerId, BookingSearchState.ALL).size());
+        assertTrue(bookingService.findAllBookingsOfOwner(ownerId, BookingSearchState.WAITING, from, size).isEmpty());
+        assertEquals(1, bookingService.findAllBookingsOfOwner(ownerId, BookingSearchState.ALL, from, size).size());
 
 
         //get REJECTED(1)
-        assertEquals(1, bookingService.findAllBookingsOfOwner(ownerId, BookingSearchState.REJECTED).size());
+        assertEquals(1, bookingService.findAllBookingsOfOwner(ownerId, BookingSearchState.REJECTED, from, size).size());
 
         //get CURRENT
-        assertTrue(bookingService.findAllBookingsOfOwner(ownerId, BookingSearchState.CURRENT).isEmpty());
+        assertTrue(bookingService.findAllBookingsOfOwner(ownerId, BookingSearchState.CURRENT, from, size).isEmpty());
         Thread.sleep(2000);
-        assertFalse(bookingService.findAllBookingsOfOwner(ownerId, BookingSearchState.CURRENT).isEmpty());
+        assertFalse(bookingService.findAllBookingsOfOwner(ownerId, BookingSearchState.CURRENT, from, size).isEmpty());
     }
 }

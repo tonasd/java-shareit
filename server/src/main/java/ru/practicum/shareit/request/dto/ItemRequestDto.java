@@ -13,6 +13,8 @@ import lombok.experimental.FieldDefaults;
 public class ItemRequestDto {
     long id;
     String description;
+//    Вариант задать форматирование при сериализации и десериализации
+//    @JsonFormat(pattern = "dd-MM-YYYY", shape = JsonFormat.Shape.STRING)
     String created;
 
     public ItemRequestDto(ItemRequestDto obj) {

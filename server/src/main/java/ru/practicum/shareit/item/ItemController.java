@@ -3,7 +3,6 @@ package ru.practicum.shareit.item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ru.practicum.shareit.item.dto.CommentDto;
@@ -12,8 +11,6 @@ import ru.practicum.shareit.item.dto.ItemWithBookingsAndCommentsDto;
 import ru.practicum.shareit.item.dto.ItemWithBookingsDto;
 import ru.practicum.shareit.item.service.ItemService;
 
-import javax.validation.constraints.Positive;
-import javax.validation.constraints.PositiveOrZero;
 import java.util.Collection;
 import java.util.Map;
 
@@ -21,7 +18,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/items")
 @RequiredArgsConstructor
-@Validated
 public class ItemController {
     private final ItemService itemService;
 
@@ -44,7 +40,8 @@ public class ItemController {
     }
 
     @GetMapping("/{itemId}")
-    public ItemWithBookingsAndCommentsDto getByItemId(@PathVariable Long itemId, @RequestHeader("X-Sharer-User-Id") Long userId) {
+    public ItemWithBookingsAndCommentsDto getByItemId(@PathVariable Long itemId,
+                                                      @RequestHeader("X-Sharer-User-Id") Long userId) {
         ItemWithBookingsAndCommentsDto itemDto = itemService.getByItemId(itemId, userId);
         log.info("User {} got item {}", userId, itemDto);
         return itemDto;
@@ -53,8 +50,8 @@ public class ItemController {
     @GetMapping
     public Collection<ItemWithBookingsDto> getAllUsersItems(
             @RequestHeader("X-Sharer-User-Id") Long userId,
-            @RequestParam(defaultValue = "0") @PositiveOrZero(message = "from cannot be negative") int from,
-            @RequestParam(defaultValue = "10") @Positive(message = "size must be positive") int size
+            @RequestParam(defaultValue = "0") int from,
+            @RequestParam(defaultValue = "10") int size
     ) {
         Collection<ItemWithBookingsDto> collection = itemService.getByUserId(userId, from, size);
         log.info("Given {} items belong to user {}", collection.size(), userId);
@@ -63,9 +60,9 @@ public class ItemController {
 
     @GetMapping("/search")
     public Collection<ItemDto> findByText(
-            @RequestParam() String text,
-            @RequestParam(defaultValue = "0") @PositiveOrZero(message = "from cannot be negative") int from,
-            @RequestParam(defaultValue = "10") @Positive(message = "size must be positive") int size
+            @RequestParam String text,
+            @RequestParam(defaultValue = "0") int from,
+            @RequestParam(defaultValue = "10") int size
     ) {
         Collection<ItemDto> collection = itemService.findByText(text, from, size);
         log.info("It has been found {} items with text \"{}\"", collection.size(), text);
@@ -85,7 +82,6 @@ public class ItemController {
         CommentDto commentDto = itemService.postCommentForItemFromAuthor(requestBody.get("text"), itemId, authorId);
         log.info("Author {} added comment for item {}", authorId, itemId);
         return commentDto;
-
     }
 
 }

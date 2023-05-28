@@ -2,21 +2,17 @@ package ru.practicum.shareit.request;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.request.dto.AddItemRequestDto;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.dto.ItemRequestWithItemsDto;
 
-import javax.validation.constraints.Positive;
-import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @Slf4j
 @RestController
 @RequestMapping(path = "/requests")
 @RequiredArgsConstructor
-@Validated
 public class ItemRequestController {
     private final ItemRequestService itemRequestService;
 
@@ -39,10 +35,8 @@ public class ItemRequestController {
 
     @GetMapping("/all")
     public List<ItemRequestWithItemsDto> getAllPageable(@RequestHeader("X-Sharer-User-id") long userId,
-                                               @RequestParam(defaultValue = "0")
-                                               @PositiveOrZero(message = "from cannot be negative") int from,
-                                               @RequestParam(defaultValue = "10")
-                                               @Positive(message = "size must be positive") int size) {
+                                                        @RequestParam(defaultValue = "0") int from,
+                                                        @RequestParam(defaultValue = "10") int size) {
         List<ItemRequestWithItemsDto> result = itemRequestService.findAllPageable(userId, from, size);
         log.info("For user {} given {} item requests of other users. Requested from {}, size {} ",
                 userId, result.size(), from, size);

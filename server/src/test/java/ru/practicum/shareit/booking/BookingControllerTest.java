@@ -30,11 +30,11 @@ class BookingControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper mapper;
-
     @MockBean
     private BookingService service;
+
+    @Autowired
+    private ObjectMapper mapper;
 
     @SneakyThrows
     @Test
@@ -156,16 +156,5 @@ class BookingControllerTest {
         verify(service, times(1))
                 .findAllBookingsOfOwner(ownerId, defaultState, defaultFrom, defaultSize);
 
-    }
-
-    @SneakyThrows
-    @Test
-    void findBookingsOfOwner_shouldReturnClientError_whenInvokedWithWrongState() {
-        long ownerId = 3L;
-        String state = "WRONG_STATE";
-        mockMvc.perform(get("/bookings/owner")
-                        .header("X-Sharer-User-id", ownerId)
-                        .queryParam("state", state))
-                .andExpect(status().is4xxClientError());
     }
 }

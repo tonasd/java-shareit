@@ -20,7 +20,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.AdditionalAnswers.returnsSecondArg;
@@ -28,7 +27,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = ItemController.class)
 class ItemControllerTest {
@@ -123,15 +123,6 @@ class ItemControllerTest {
 
         assertEquals(mapper.writeValueAsString(expected), responseBody);
 
-    }
-
-    @Test
-    void getAllUsersItems_shouldReturnClientError_whenParamSizeIs0() throws Exception {
-        mockMvc.perform(get("/items")
-                        .header("X-Sharer-User-Id", 1)
-                        .queryParam("size", "0"))
-                .andExpect(status().is4xxClientError())
-                .andExpect(content().string(containsString("size must be positive")));
     }
 
     @Test

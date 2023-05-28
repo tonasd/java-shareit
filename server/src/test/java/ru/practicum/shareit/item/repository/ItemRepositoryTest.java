@@ -11,7 +11,7 @@ import ru.practicum.shareit.user.User;
 
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @DataJpaTest(showSql = true)
 class ItemRepositoryTest {

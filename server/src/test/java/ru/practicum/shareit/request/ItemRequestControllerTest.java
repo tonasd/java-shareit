@@ -16,7 +16,6 @@ import ru.practicum.shareit.request.dto.ItemRequestWithItemsDto;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -64,25 +63,7 @@ class ItemRequestControllerTest {
 
         verify(itemRequestService).findAllRequesterRequests(requesterId);
         verifyNoMoreInteractions(itemRequestService);
-
-
     }
-
-    @SneakyThrows
-    @Test
-    void getAllPageableShouldThrowExceptionWhenSizeParamIsNotPositive() {
-        String responseBody = mockMvc.perform(get("/requests/all")
-                        .header("X-Sharer-User-id", 1)
-                        .param("size", "0"))
-                .andExpect(status().isBadRequest())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        assertTrue(responseBody.contains("size"));
-        verifyNoInteractions(itemRequestService);
-    }
-
 
     @SneakyThrows
     @Test

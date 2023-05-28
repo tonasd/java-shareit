@@ -16,6 +16,7 @@ import java.util.Map;
 @Slf4j
 public class ErrorHandler {
 
+    // TODO: delete handler
     @ExceptionHandler({ConstraintViolationException.class, ItemNotAvailableException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     protected String handleConstraintViolationException(final RuntimeException e) {
@@ -35,7 +36,7 @@ public class ErrorHandler {
     @ResponseStatus(value = HttpStatus.CONFLICT)
     protected String handleDataIntegrityViolation(final DataIntegrityViolationException e) {
         String message = e.getMostSpecificCause().getMessage();
-        if (message.contains("EMAIL_UNIQUE")) {
+        if (message.toLowerCase().contains("email_unique")) {
             message = "Email is already registered for another user";
         } else {
             message = "Conflict with server rules";
@@ -45,6 +46,7 @@ public class ErrorHandler {
         return message;
     }
 
+    // TODO: delete handler
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     protected String handleMissingRequestHeaderException(final MissingRequestHeaderException e) {
@@ -52,6 +54,7 @@ public class ErrorHandler {
         return e.getLocalizedMessage();
     }
 
+    // TODO: delete handler
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     protected Map<String, String> handleUnknownStateException(final UnknownStateException e) {

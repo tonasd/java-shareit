@@ -2,7 +2,6 @@ package ru.practicum.shareit.booking;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
@@ -45,4 +44,5 @@ public class BookingController {
                                              @PathVariable Long bookingId) {
         log.info("Get booking {}, userId={}", bookingId, userId);
         return bookingClient.getBooking(userId, bookingId);
-    }}
+    }
+}

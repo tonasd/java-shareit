@@ -15,11 +15,14 @@ import java.util.Map;
 @RestControllerAdvice
 public class ErrorHandler {
 
-    @ExceptionHandler({ConstraintViolationException.class})
+    @ExceptionHandler({ConstraintViolationException.class, IllegalArgumentException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    protected String handleConstraintViolationException(final ConstraintViolationException e) {
+    protected Map<String, String> handleConstraintViolationException(final RuntimeException e) {
         log.warn(e.toString());
-        return e.getMessage();
+        Map<String, String> response = Map.of(
+                "error", e.getMessage()
+        );
+        return response;
     }
 
     @ExceptionHandler

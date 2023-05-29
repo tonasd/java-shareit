@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import javax.validation.ConstraintViolationException;
-import java.util.Map;
 
 @RestControllerAdvice
 @Slf4j
@@ -52,14 +51,6 @@ public class ErrorHandler {
     protected String handleMissingRequestHeaderException(final MissingRequestHeaderException e) {
         log.warn(e.toString());
         return e.getLocalizedMessage();
-    }
-
-    // TODO: delete handler
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    protected Map<String, String> handleUnknownStateException(final UnknownStateException e) {
-        log.warn(e.toString());
-        return Map.of("error", "Unknown state: " + e.getMessage());
     }
 
 }

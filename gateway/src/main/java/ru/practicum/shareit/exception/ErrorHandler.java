@@ -39,4 +39,10 @@ public class ErrorHandler {
         String message = e.getFieldError().getField() + " " + e.getFieldError().getDefaultMessage();
         return Map.of("error", message);
     }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    protected String handleThrowable(final Throwable e) {
+        return "Unexpected error, please check your request and then try again";
+    }
 }

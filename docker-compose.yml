@@ -25,7 +25,7 @@ services:
     container_name: share-it-gateway-container
     ports:
       - "8080:8080"
-      - "8081:8081" #for remote debug
+      # - "8081:8081" #for remote debug
     depends_on:
       - server
     environment:
@@ -37,23 +37,9 @@ services:
     image: tonasd/share-it:server
     container_name: share-it-server-container
     ports:
-      - "9090:9090"
+      - "9090:9090" # - actually no need for external connection in this case
+     # - "9091:9091" #for remote debug
     depends_on:
       - db
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/shareit
-
-#  web:
-#    build: .
-#    ports:
-#      - "8080:8080"
-#    # "зависит от",
-#    depends_on:
-#      - db
-#    # переменные окружения
-#    environment:
-#      - DB_NAME=later
-#      - POSTGRES_USER=root
-#      - POSTGRES_PASSWORD=root
-#      - DB_HOST=db
-#      - DB_PORT=5432

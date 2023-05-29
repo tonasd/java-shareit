@@ -2,6 +2,7 @@ package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -118,7 +119,8 @@ public class ItemServiceImpl implements ItemService {
             throw new UserNotFoundException(userId);
         }
 
-        PageRequest page = PageRequest.of(from / size, size);
+        Sort sort = Sort.sort(Item.class).by(Item::getId);
+        PageRequest page = PageRequest.of(from / size, size, sort);
         Collection<Item> items = itemRepository.findAllByOwnerId(userId, page).collect(Collectors.toUnmodifiableList());
         Collection<ItemWithBookingsDto> itemWithBookingsDtos = new ArrayList<>(items.size());
         LocalDateTime now = LocalDateTime.now();

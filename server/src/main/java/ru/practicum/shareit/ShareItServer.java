@@ -3,9 +3,6 @@ package ru.practicum.shareit;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import javax.annotation.PostConstruct;
-import java.util.TimeZone;
-
 @SpringBootApplication
 public class ShareItServer {
 
@@ -13,10 +10,10 @@ public class ShareItServer {
         SpringApplication.run(ShareItServer.class, args);
     }
 
-    @PostConstruct
+   /* @PostConstruct   // if applied than not pass test in github due to timeZone difference
     public void init() {
         // Setting Spring Boot SetTimeZone
         TimeZone.setDefault(TimeZone.getTimeZone("Europe/Moscow"));
-    }
+    }*/
 
 }

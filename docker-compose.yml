@@ -1,0 +1,45 @@
+# версия Docker Compose
+version: '3.8'
+
+# имена и описания контейнеров, которые должны быть развёрнуты
+services:
+  # описание контейнера db
+  db:
+    # образ, из которого должен быть запущен контейнер
+    image: postgres:13.7-alpine
+    # volume и связанная с ним директория в контейнере
+    #volumes:
+    #  - /var/lib/postgresql/data/
+    container_name: share-it-db-container
+    ports:
+      - "6541:5432"
+    # переменные окружения
+    environment:
+      - POSTGRES_DB=shareit
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+
+  gateway:
+    build: gateway
+    image: tonasd/share-it:gateway
+    container_name: share-it-gateway-container
+    ports:
+      - "8080:8080"
+      # - "8081:8081" #for remote debug
+    depends_on:
+      - server
+    environment:
+      - SHAREIT_SERVER_URL=http://server:9090
+
+
+  server:
+    build: server
+    image: tonasd/share-it:server
+    container_name: share-it-server-container
+    ports:
+      - "9090:9090" # - actually no need for external connection in this case
+     # - "9091:9091" #for remote debug
+    depends_on:
+      - db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/shareit
